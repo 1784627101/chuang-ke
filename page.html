@@ -87,11 +87,12 @@
         }
 
         .main-content {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 40px 24px;
         }
 
+        /* 主页样式 */
         .home-page {
             display: block;
         }
@@ -137,6 +138,7 @@
             text-align: center;
             border: 1px solid #334155;
             transition: all 0.3s;
+            cursor: pointer;
         }
 
         .info-card:hover {
@@ -171,11 +173,21 @@
             color: #64748b;
         }
 
+        /* 消息页面样式 */
         .message-page {
             display: none;
         }
 
         .message-page.show {
+            display: block;
+        }
+
+        /* 任务页面样式 */
+        .task-page {
+            display: none;
+        }
+
+        .task-page.show {
             display: block;
         }
 
@@ -198,19 +210,27 @@
             flex-wrap: wrap;
         }
 
-        .add-form input {
-            flex: 1;
+        .add-form input, .add-form textarea {
             padding: 12px 16px;
             background: #0f172a;
             border: 1px solid #334155;
             border-radius: 12px;
             color: #e2e8f0;
-            font-size: 1rem;
+            font-size: 0.9rem;
             outline: none;
         }
 
-        .add-form input:focus {
+        .add-form input:focus, .add-form textarea:focus {
             border-color: #3b82f6;
+        }
+
+        .add-form input {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .add-form textarea {
+            width: 100%;
         }
 
         .add-form button {
@@ -221,10 +241,6 @@
             border-radius: 12px;
             cursor: pointer;
             font-weight: 600;
-        }
-
-        .add-form button:hover {
-            background: #16a34a;
         }
 
         .table-wrapper {
@@ -262,8 +278,15 @@
             font-size: 0.75rem;
         }
 
-        .delete-btn:hover {
-            background: #dc2626;
+        .complete-btn {
+            background: #22c55e;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            margin-right: 5px;
         }
 
         .loading {
@@ -280,6 +303,86 @@
         .back-home-btn:hover {
             background: #475569;
         }
+
+        .task-item {
+            background: #0f172a;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .task-info {
+            flex: 1;
+        }
+
+        .task-title {
+            color: #e2e8f0;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .task-desc {
+            color: #94a3b8;
+            font-size: 0.8rem;
+            margin-bottom: 8px;
+        }
+
+        .task-meta {
+            color: #64748b;
+            font-size: 0.7rem;
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .task-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .status-todo {
+            background: #ef4444;
+            color: white;
+        }
+
+        .status-done {
+            background: #22c55e;
+            color: white;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            background: #334155;
+            color: #e2e8f0;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .tab-btn.active {
+            background: #3b82f6;
+        }
     </style>
 </head>
 <body>
@@ -292,59 +395,54 @@
                 <span>👤</span>
                 <span class="username" id="displayUsername"></span>
             </div>
-            <button class="message-btn" id="messageBtn" onclick="showMessagePage()">
-                📩 消息
-            </button>
+            <button class="message-btn" id="messageBtn" onclick="showMessagePage()">📩 消息</button>
+            <button class="message-btn" id="taskBtn" onclick="showTaskPage()">📋 任务</button>
             <button class="logout-btn" onclick="logout()">退出</button>
         </div>
     </div>
 
     <div class="main-content">
-        <!-- 主页 -->
+        <!-- ========== 主页 ========== -->
         <div id="homePage" class="home-page">
             <div class="welcome-card">
                 <div class="welcome-icon">🏫</div>
                 <h2>欢迎回来，<span id="welcomeUsername"></span>！</h2>
                 <p>君兰中学信息科管理系统</p>
-                <button class="message-btn" onclick="showMessagePage()" style="margin-top: 16px;">
-                    📩 进入消息中心
-                </button>
             </div>
 
             <div class="info-cards">
-                <!-- 访问统计卡片 -->
+                <div class="info-card" onclick="showMessagePage()">
+                    <div class="info-icon">📝</div>
+                    <h3>消息管理</h3>
+                    <p>查看和发布通知消息</p>
+                </div>
+
+                <div class="info-card" onclick="showTaskPage()">
+                    <div class="info-icon">📋</div>
+                    <h3>任务管理</h3>
+                    <p>布置任务、跟踪进度</p>
+                </div>
+
                 <div class="info-card">
                     <div class="info-icon">👥</div>
                     <h3>访问统计</h3>
                     <div class="info-value" id="totalVisits">--</div>
-                    <div class="info-unit">总访问次数</div>
-                    <p>今日访问: <span id="todayVisits">--</span> 次</p>
-                    <p>独立用户: <span id="uniqueUsers">--</span> 人</p>
-                </div>
-
-                <!-- 数据统计卡片 -->
-                <div class="info-card">
-                    <div class="info-icon">📊</div>
-                    <h3>数据统计</h3>
-                    <div class="info-value" id="totalMessages">--</div>
-                    <div class="info-unit">总消息数</div>
-                    <p>当前数据库中的消息总量</p>
+                    <p>总访问次数: <span id="totalVisitsText">--</span></p>
+                    <p>今日访问: <span id="todayVisits">--</span></p>
                 </div>
             </div>
         </div>
 
-        <!-- 消息页面 -->
+        <!-- ========== 消息页面 ========== -->
         <div id="messagePage" class="message-page">
             <div class="card">
-                <button class="message-btn back-home-btn" onclick="showHomePage()">
-                    ← 返回主页
-                </button>
+                <button class="message-btn back-home-btn" onclick="showHomePage()">← 返回主页</button>
             </div>
 
             <div class="card">
                 <h2>➕ 添加消息</h2>
                 <div class="add-form">
-                    <input type="text" id="textContent" placeholder="请输入内容" autocomplete="off">
+                    <input type="text" id="textContent" placeholder="请输入内容">
                     <button onclick="addText()">添加</button>
                 </div>
             </div>
@@ -356,12 +454,46 @@
                 </div>
             </div>
         </div>
+
+        <!-- ========== 任务页面 ========== -->
+        <div id="taskPage" class="task-page">
+            <div class="card">
+                <button class="message-btn back-home-btn" onclick="showHomePage()">← 返回主页</button>
+            </div>
+
+            <div class="card">
+                <h2>➕ 布置新任务</h2>
+                <div class="add-form">
+                    <input type="text" id="taskTitle" placeholder="任务标题">
+                    <input type="text" id="taskAssignee" placeholder="负责人用户名">
+                    <button onclick="addTask()">布置</button>
+                </div>
+                <textarea id="taskDesc" rows="2" placeholder="任务描述（可选）" style="margin-top: 12px; width: 100%; padding: 12px; background: #0f172a; border: 1px solid #334155; border-radius: 12px; color: #e2e8f0;"></textarea>
+            </div>
+
+            <div class="card">
+                <h2>📋 任务列表</h2>
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="filterTasks('all')">全部</button>
+                    <button class="tab-btn" onclick="filterTasks('待完成')">待完成</button>
+                    <button class="tab-btn" onclick="filterTasks('已完成')">已完成</button>
+                    <button class="tab-btn" onclick="filterTasks('mine')">我负责的</button>
+                    <button class="tab-btn" onclick="filterTasks('created')">我布置的</button>
+                </div>
+                <div id="tasksContainer">
+                    <div class="loading">加载中...</div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
         const API_URL = 'https://energetic-presence-production.up.railway.app/api';
         let currentUsername = '';
+        let allTasks = [];
+        let currentFilter = 'all';
 
+        // ========== 通用函数 ==========
         function getUsernameFromURL() {
             const urlParams = new URLSearchParams(window.location.search);
             const username = urlParams.get('username');
@@ -391,9 +523,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username })
                 });
-            } catch (e) {
-                console.log('记录访问失败:', e);
-            }
+            } catch (e) {}
         }
 
         async function loadVisitStats() {
@@ -402,79 +532,73 @@
                 const data = await response.json();
                 if (data.success) {
                     document.getElementById('totalVisits').innerText = data.totalVisits || 0;
+                    document.getElementById('totalVisitsText').innerText = data.totalVisits || 0;
                     document.getElementById('todayVisits').innerText = data.todayVisits || 0;
-                    document.getElementById('uniqueUsers').innerText = data.uniqueUsers || 0;
                 }
-            } catch (error) {
-                console.error('获取访问统计失败:', error);
-            }
-        }
-
-        async function loadTotalMessages() {
-            try {
-                const response = await fetch(`${API_URL}/texts`);
-                const result = await response.json();
-                if (result.success) {
-                    const count = result.data ? result.data.length : 0;
-                    document.getElementById('totalMessages').innerText = count;
-                }
-            } catch (error) {
-                console.error('获取消息总数失败:', error);
-                document.getElementById('totalMessages').innerText = '--';
-            }
-        }
-
-        async function refreshStats() {
-            await Promise.all([
-                loadVisitStats(),
-                loadTotalMessages()
-            ]);
+            } catch (error) {}
         }
 
         function showHomePage() {
             document.getElementById('homePage').classList.remove('hide');
             document.getElementById('messagePage').classList.remove('show');
-            const msgBtn = document.getElementById('messageBtn');
-            msgBtn.classList.remove('active');
-            refreshStats();
+            document.getElementById('taskPage').classList.remove('show');
+            document.getElementById('messageBtn').classList.remove('active');
+            document.getElementById('taskBtn').classList.remove('active');
+            loadVisitStats();
         }
 
         function showMessagePage() {
             document.getElementById('homePage').classList.add('hide');
             document.getElementById('messagePage').classList.add('show');
-            const msgBtn = document.getElementById('messageBtn');
-            msgBtn.classList.add('active');
-            loadData();
+            document.getElementById('taskPage').classList.remove('show');
+            document.getElementById('messageBtn').classList.add('active');
+            document.getElementById('taskBtn').classList.remove('active');
+            loadMessages();
         }
 
-        async function loadData() {
+        function showTaskPage() {
+            document.getElementById('homePage').classList.add('hide');
+            document.getElementById('messagePage').classList.remove('show');
+            document.getElementById('taskPage').classList.add('show');
+            document.getElementById('messageBtn').classList.remove('active');
+            document.getElementById('taskBtn').classList.add('active');
+            loadTasks();
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        function logout() {
+            localStorage.removeItem('username');
+            window.location.href = 'index.html';
+        }
+
+        // ========== 消息管理 ==========
+        async function loadMessages() {
             const container = document.getElementById('tableContainer');
             container.innerHTML = '<div class="loading">加载中...</div>';
             try {
                 const response = await fetch(`${API_URL}/texts`);
                 const result = await response.json();
                 if (result.success && result.data && result.data.length > 0) {
-                    let html = `<table><thead><tr>
-                        <th style="width: 60px;">ID</th>
-                        <th>内容</th>
-                        <th style="width: 120px;">创建人</th>
-                        <th style="width: 80px;">操作</th>
-                    </tr></thead><tbody>`;
+                    let html = `<table><thead><tr><th>ID</th><th>内容</th><th>创建人</th><th>操作</th></tr></thead><tbody>`;
                     for (const item of result.data) {
-                        html += `<tr>
-                            <td>${escapeHtml(String(item.id))}</td>
-                            <td style="word-break: break-word; white-space: normal;">${escapeHtml(String(item.content || ''))}</td>
-                            <td>${escapeHtml(String(item.username || ''))}</td>
-                            <td><button class="delete-btn" onclick="deleteText(${item.id})">删除</button></td>
-                        </tr>`;
+                        html += `<tr><td>${escapeHtml(String(item.id))}</td><td>${escapeHtml(String(item.content || ''))}</td><td>${escapeHtml(String(item.username || ''))}</td><td><button class="delete-btn" onclick="deleteText(${item.id})">删除</button></td></tr>`;
                     }
-                    html += `</tbody></table>`;
+                    html += `</tbody><tr>`;
                     container.innerHTML = html;
                 } else {
                     container.innerHTML = '<div class="loading">暂无数据，请添加</div>';
                 }
             } catch (error) {
-                container.innerHTML = '<div class="loading">加载失败: ' + escapeHtml(error.message) + '</div>';
+                container.innerHTML = '<div class="loading">加载失败</div>';
             }
         }
 
@@ -493,8 +617,7 @@
                 const result = await response.json();
                 if (result.success) {
                     document.getElementById('textContent').value = '';
-                    loadData();
-                    loadTotalMessages();
+                    loadMessages();
                 } else {
                     alert('添加失败: ' + result.error);
                 }
@@ -504,40 +627,138 @@
         }
 
         async function deleteText(id) {
-            if (!confirm('确定要删除这条数据吗？')) return;
+            if (!confirm('确定要删除吗？')) return;
             try {
-                const response = await fetch(`${API_URL}/texts/${id}`, { method: 'DELETE' });
-                const result = await response.json();
-                if (result.success) {
-                    loadData();
-                    loadTotalMessages();
-                } else {
-                    alert('删除失败: ' + result.error);
-                }
+                await fetch(`${API_URL}/texts/${id}`, { method: 'DELETE' });
+                loadMessages();
             } catch (error) {
-                alert('网络错误: ' + error.message);
+                alert('删除失败');
             }
         }
 
-        function logout() {
-            localStorage.removeItem('username');
-            window.location.href = 'index.html';
+        // ========== 任务管理 ==========
+        async function loadTasks() {
+            const container = document.getElementById('tasksContainer');
+            container.innerHTML = '<div class="loading">加载中...</div>';
+            try {
+                const response = await fetch(`${API_URL}/tasks`);
+                const result = await response.json();
+                if (result.success) {
+                    allTasks = result.data;
+                    renderTasks();
+                } else {
+                    container.innerHTML = '<div class="loading">加载失败</div>';
+                }
+            } catch (error) {
+                container.innerHTML = '<div class="loading">加载失败</div>';
+            }
         }
 
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
+        function renderTasks() {
+            let filteredTasks = allTasks;
+            if (currentFilter === '待完成') {
+                filteredTasks = allTasks.filter(t => t.status === '待完成');
+            } else if (currentFilter === '已完成') {
+                filteredTasks = allTasks.filter(t => t.status === '已完成');
+            } else if (currentFilter === 'mine') {
+                filteredTasks = allTasks.filter(t => t.assignee === currentUsername);
+            } else if (currentFilter === 'created') {
+                filteredTasks = allTasks.filter(t => t.creator === currentUsername);
+            }
+
+            const container = document.getElementById('tasksContainer');
+            if (filteredTasks.length === 0) {
+                container.innerHTML = '<div class="loading">暂无任务</div>';
+                return;
+            }
+
+            let html = '';
+            for (const task of filteredTasks) {
+                let statusClass = task.status === '待完成' ? 'status-todo' : 'status-done';
+                html += `
+                    <div class="task-item">
+                        <div class="task-info">
+                            <div class="task-title">📌 ${escapeHtml(task.title)}</div>
+                            ${task.description ? `<div class="task-desc">${escapeHtml(task.description)}</div>` : ''}
+                            <div class="task-meta">
+                                <span>负责人: ${escapeHtml(task.assignee)}</span>
+                                <span>布置人: ${escapeHtml(task.creator)}</span>
+                                <span class="task-status ${statusClass}">${task.status}</span>
+                            </div>
+                        </div>
+                        <div class="task-actions">
+                            ${task.status === '待完成' && task.assignee === currentUsername ? `<button class="complete-btn" onclick="completeTask(${task.id})">✅ 完成</button>` : ''}
+                            ${task.creator === currentUsername ? `<button class="delete-btn" onclick="deleteTask(${task.id})">🗑 删除</button>` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
         }
 
+        function filterTasks(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('#taskPage .tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            renderTasks();
+        }
+
+        async function addTask() {
+            const title = document.getElementById('taskTitle').value;
+            const assignee = document.getElementById('taskAssignee').value;
+            const description = document.getElementById('taskDesc').value;
+            if (!title.trim()) {
+                alert('请输入任务标题');
+                return;
+            }
+            if (!assignee.trim()) {
+                alert('请输入负责人用户名');
+                return;
+            }
+            try {
+                const response = await fetch(`${API_URL}/tasks`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, description, assignee, creator: currentUsername })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    document.getElementById('taskTitle').value = '';
+                    document.getElementById('taskAssignee').value = '';
+                    document.getElementById('taskDesc').value = '';
+                    loadTasks();
+                } else {
+                    alert('添加失败: ' + result.error);
+                }
+            } catch (error) {
+                alert('网络错误');
+            }
+        }
+
+        async function completeTask(id) {
+            if (!confirm('确定完成这个任务吗？')) return;
+            try {
+                await fetch(`${API_URL}/tasks/${id}/complete`, { method: 'PUT' });
+                loadTasks();
+            } catch (error) {
+                alert('操作失败');
+            }
+        }
+
+        async function deleteTask(id) {
+            if (!confirm('确定删除这个任务吗？')) return;
+            try {
+                await fetch(`${API_URL}/tasks/${id}`, { method: 'DELETE' });
+                loadTasks();
+            } catch (error) {
+                alert('删除失败');
+            }
+        }
+
+        // 初始化
         getUsernameFromURL();
         showHomePage();
-        refreshStats();
-        setInterval(refreshStats, 30000);
+        loadVisitStats();
     </script>
 </body>
 </html>

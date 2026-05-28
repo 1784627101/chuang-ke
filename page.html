@@ -173,6 +173,34 @@
             color: #64748b;
         }
 
+        .task-stats {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #334155;
+        }
+
+        .task-stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+        }
+
+        .task-stat-label {
+            color: #94a3b8;
+        }
+
+        .task-stat-number {
+            color: #38bdf8;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .task-stat-number.warning {
+            color: #f97316;
+        }
+
         /* 消息页面样式 */
         .message-page {
             display: none;
@@ -421,6 +449,20 @@
                     <div class="info-icon">📋</div>
                     <h3>任务管理</h3>
                     <p>布置任务、跟踪进度</p>
+                    <div class="task-stats">
+                        <div class="task-stat-item">
+                            <span class="task-stat-label">📊 未完成任务总数</span>
+                            <span class="task-stat-number" id="totalUnfinishedTasks">--</span>
+                        </div>
+                        <div class="task-stat-item">
+                            <span class="task-stat-label">✅ 我需完成的任务</span>
+                            <span class="task-stat-number" id="myPendingTasks">--</span>
+                        </div>
+                        <div class="task-stat-item">
+                            <span class="task-stat-label">📋 我布置的任务</span>
+                            <span class="task-stat-number" id="myCreatedTasks">--</span>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="info-card">
@@ -550,6 +592,39 @@
             }
         }
 
+        // 更新主页任务统计
+        function updateTaskStats() {
+            if (!allTasks.length) {
+                document.getElementById('totalUnfinishedTasks').innerText = '0';
+                document.getElementById('myPendingTasks').innerText = '0';
+                document.getElementById('myCreatedTasks').innerText = '0';
+                return;
+            }
+
+            // 未完成任务总数（状态为"待完成"的任务）
+            const totalUnfinished = allTasks.filter(t => t.status === '待完成').length;
+            
+            // 我需完成的任务（负责人是当前用户且状态为"待完成"）
+            const myPending = allTasks.filter(t => t.assignee === currentUsername && t.status === '待完成').length;
+            
+            // 我布置的任务总数（创建人是当前用户）
+            const myCreated = allTasks.filter(t => t.creator === currentUsername).length;
+            
+            document.getElementById('totalUnfinishedTasks').innerText = totalUnfinished;
+            document.getElementById('myPendingTasks').innerText = myPending;
+            document.getElementById('myCreatedTasks').innerText = myCreated;
+            
+            // 如果待完成任务数 > 0，添加警告样式
+            const myPendingElement = document.getElementById('myPendingTasks');
+            if (myPending > 0) {
+                myPendingElement.classList.add('warning');
+            } else {
+                myPendingElement.classList.remove('warning');
+            }
+            
+            console.log('📊 任务统计更新:', { totalUnfinished, myPending, myCreated });
+        }
+
         function showHomePage() {
             console.log('🏠 切换到主页');
             document.getElementById('homePage').classList.remove('hide');
@@ -558,6 +633,7 @@
             document.getElementById('messageBtn').classList.remove('active');
             document.getElementById('taskBtn').classList.remove('active');
             loadVisitStats();
+            updateTaskStats(); // 更新任务统计
         }
 
         function showMessagePage() {
@@ -606,9 +682,14 @@
                 const result = await response.json();
                 console.log('📥 消息数据响应:', result);
                 if (result.success && result.data && result.data.length > 0) {
-                    let html = `<table><thead><tr><th>ID</th><th>内容</th><th>创建人</th><th>操作</th></tr></thead><tbody>`;
+                    // 隐藏 ID 列 - 只显示内容、创建人和操作
+                    let html = `<table><thead><tr><th>内容</th><th>创建人</th><th>操作</th></thead><tbody>`;
                     for (const item of result.data) {
-                        html += `<tr><td>${escapeHtml(String(item.id))}</td><td>${escapeHtml(String(item.content || ''))}</td><td>${escapeHtml(String(item.username || ''))}</td><td><button class="delete-btn" onclick="deleteText(${item.id})">删除</button></td></tr>`;
+                        html += `<tr>
+                            <tr>${escapeHtml(String(item.content || ''))}</td>
+                            <td>${escapeHtml(String(item.username || ''))}</td>
+                            <td><button class="delete-btn" onclick="deleteText(${item.id})">删除</button></td>
+                        </tr>`;
                     }
                     html += `</tbody></table>`;
                     container.innerHTML = html;
@@ -677,6 +758,7 @@
                     allTasks = result.data;
                     console.log(`✅ 加载了 ${allTasks.length} 个任务`);
                     renderTasks();
+                    updateTaskStats(); // 更新主页的任务统计
                 } else {
                     console.error('❌ 加载任务失败:', result.error);
                     container.innerHTML = '<div class="loading">加载失败: ' + (result.error || '未知错误') + '</div>';

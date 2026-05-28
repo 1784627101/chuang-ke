@@ -474,11 +474,11 @@
             <div class="card">
                 <h2>📋 任务列表</h2>
                 <div class="tabs">
-                    <button class="tab-btn active" onclick="filterTasks('all')">全部</button>
-                    <button class="tab-btn" onclick="filterTasks('待完成')">待完成</button>
-                    <button class="tab-btn" onclick="filterTasks('已完成')">已完成</button>
-                    <button class="tab-btn" onclick="filterTasks('mine')">我负责的</button>
-                    <button class="tab-btn" onclick="filterTasks('created')">我布置的</button>
+                    <button class="tab-btn active" onclick="filterTasks('all', this)">全部</button>
+                    <button class="tab-btn" onclick="filterTasks('待完成', this)">待完成</button>
+                    <button class="tab-btn" onclick="filterTasks('已完成', this)">已完成</button>
+                    <button class="tab-btn" onclick="filterTasks('mine', this)">我负责的</button>
+                    <button class="tab-btn" onclick="filterTasks('created', this)">我布置的</button>
                 </div>
                 <div id="tasksContainer">
                     <div class="loading">加载中...</div>
@@ -493,10 +493,13 @@
         let allTasks = [];
         let currentFilter = 'all';
 
+        console.log('🚀 页面初始化开始');
+
         // ========== 通用函数 ==========
         function getUsernameFromURL() {
             const urlParams = new URLSearchParams(window.location.search);
             const username = urlParams.get('username');
+            console.log('📌 从URL获取用户名:', username);
             if (username) {
                 currentUsername = username;
                 localStorage.setItem('username', username);
@@ -505,15 +508,18 @@
                 trackVisit(username);
             } else {
                 const savedUsername = localStorage.getItem('username');
+                console.log('📌 从localStorage获取用户名:', savedUsername);
                 if (savedUsername) {
                     currentUsername = savedUsername;
                     document.getElementById('displayUsername').innerText = savedUsername;
                     document.getElementById('welcomeUsername').innerText = savedUsername;
                     trackVisit(savedUsername);
                 } else {
+                    console.log('❌ 未找到用户名，跳转到登录页');
                     window.location.href = 'index.html';
                 }
             }
+            console.log('✅ 当前登录用户:', currentUsername);
         }
 
         async function trackVisit(username) {
@@ -523,7 +529,10 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username })
                 });
-            } catch (e) {}
+                console.log('📊 访问已记录:', username);
+            } catch (e) {
+                console.error('记录访问失败:', e);
+            }
         }
 
         async function loadVisitStats() {
@@ -534,11 +543,15 @@
                     document.getElementById('totalVisits').innerText = data.totalVisits || 0;
                     document.getElementById('totalVisitsText').innerText = data.totalVisits || 0;
                     document.getElementById('todayVisits').innerText = data.todayVisits || 0;
+                    console.log('📊 访问统计:', data);
                 }
-            } catch (error) {}
+            } catch (error) {
+                console.error('加载访问统计失败:', error);
+            }
         }
 
         function showHomePage() {
+            console.log('🏠 切换到主页');
             document.getElementById('homePage').classList.remove('hide');
             document.getElementById('messagePage').classList.remove('show');
             document.getElementById('taskPage').classList.remove('show');
@@ -548,6 +561,7 @@
         }
 
         function showMessagePage() {
+            console.log('📩 切换到消息页面');
             document.getElementById('homePage').classList.add('hide');
             document.getElementById('messagePage').classList.add('show');
             document.getElementById('taskPage').classList.remove('show');
@@ -557,6 +571,7 @@
         }
 
         function showTaskPage() {
+            console.log('📋 切换到任务页面');
             document.getElementById('homePage').classList.add('hide');
             document.getElementById('messagePage').classList.remove('show');
             document.getElementById('taskPage').classList.add('show');
@@ -576,6 +591,7 @@
         }
 
         function logout() {
+            console.log('🚪 退出登录');
             localStorage.removeItem('username');
             window.location.href = 'index.html';
         }
@@ -584,20 +600,25 @@
         async function loadMessages() {
             const container = document.getElementById('tableContainer');
             container.innerHTML = '<div class="loading">加载中...</div>';
+            console.log('📩 开始加载消息列表');
             try {
                 const response = await fetch(`${API_URL}/texts`);
                 const result = await response.json();
+                console.log('📥 消息数据响应:', result);
                 if (result.success && result.data && result.data.length > 0) {
                     let html = `<table><thead><tr><th>ID</th><th>内容</th><th>创建人</th><th>操作</th></tr></thead><tbody>`;
                     for (const item of result.data) {
                         html += `<tr><td>${escapeHtml(String(item.id))}</td><td>${escapeHtml(String(item.content || ''))}</td><td>${escapeHtml(String(item.username || ''))}</td><td><button class="delete-btn" onclick="deleteText(${item.id})">删除</button></td></tr>`;
                     }
-                    html += `</tbody><tr>`;
+                    html += `</tbody></table>`;
                     container.innerHTML = html;
+                    console.log(`✅ 加载了 ${result.data.length} 条消息`);
                 } else {
                     container.innerHTML = '<div class="loading">暂无数据，请添加</div>';
+                    console.log('📭 暂无消息数据');
                 }
             } catch (error) {
+                console.error('❌ 加载消息失败:', error);
                 container.innerHTML = '<div class="loading">加载失败</div>';
             }
         }
@@ -608,6 +629,7 @@
                 alert('请输入内容');
                 return;
             }
+            console.log('📝 添加消息:', content);
             try {
                 const response = await fetch(`${API_URL}/texts`, {
                     method: 'POST',
@@ -615,23 +637,29 @@
                     body: JSON.stringify({ content: content, username: currentUsername })
                 });
                 const result = await response.json();
+                console.log('📤 添加消息响应:', result);
                 if (result.success) {
                     document.getElementById('textContent').value = '';
                     loadMessages();
+                    alert('消息添加成功！');
                 } else {
                     alert('添加失败: ' + result.error);
                 }
             } catch (error) {
+                console.error('❌ 添加消息失败:', error);
                 alert('网络错误: ' + error.message);
             }
         }
 
         async function deleteText(id) {
             if (!confirm('确定要删除吗？')) return;
+            console.log('🗑 删除消息 ID:', id);
             try {
                 await fetch(`${API_URL}/texts/${id}`, { method: 'DELETE' });
+                console.log('✅ 删除成功');
                 loadMessages();
             } catch (error) {
+                console.error('❌ 删除失败:', error);
                 alert('删除失败');
             }
         }
@@ -640,17 +668,22 @@
         async function loadTasks() {
             const container = document.getElementById('tasksContainer');
             container.innerHTML = '<div class="loading">加载中...</div>';
+            console.log('📋 开始加载任务列表');
             try {
                 const response = await fetch(`${API_URL}/tasks`);
                 const result = await response.json();
+                console.log('📥 任务数据响应:', result);
                 if (result.success) {
                     allTasks = result.data;
+                    console.log(`✅ 加载了 ${allTasks.length} 个任务`);
                     renderTasks();
                 } else {
-                    container.innerHTML = '<div class="loading">加载失败</div>';
+                    console.error('❌ 加载任务失败:', result.error);
+                    container.innerHTML = '<div class="loading">加载失败: ' + (result.error || '未知错误') + '</div>';
                 }
             } catch (error) {
-                container.innerHTML = '<div class="loading">加载失败</div>';
+                console.error('❌ 网络错误:', error);
+                container.innerHTML = '<div class="loading">加载失败: ' + error.message + '</div>';
             }
         }
 
@@ -665,13 +698,15 @@
             } else if (currentFilter === 'created') {
                 filteredTasks = allTasks.filter(t => t.creator === currentUsername);
             }
-
+            
+            console.log(`📊 过滤后任务数: ${filteredTasks.length}, 当前过滤: ${currentFilter}`);
+            
             const container = document.getElementById('tasksContainer');
             if (filteredTasks.length === 0) {
                 container.innerHTML = '<div class="loading">暂无任务</div>';
                 return;
             }
-
+            
             let html = '';
             for (const task of filteredTasks) {
                 let statusClass = task.status === '待完成' ? 'status-todo' : 'status-done';
@@ -696,10 +731,11 @@
             container.innerHTML = html;
         }
 
-        function filterTasks(filter) {
+        function filterTasks(filter, btnElement) {
+            console.log(`🔍 切换过滤: ${filter}`);
             currentFilter = filter;
             document.querySelectorAll('#taskPage .tab-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+            if (btnElement) btnElement.classList.add('active');
             renderTasks();
         }
 
@@ -707,6 +743,9 @@
             const title = document.getElementById('taskTitle').value;
             const assignee = document.getElementById('taskAssignee').value;
             const description = document.getElementById('taskDesc').value;
+            
+            console.log('📝 准备添加任务:', { title, assignee, description, creator: currentUsername });
+            
             if (!title.trim()) {
                 alert('请输入任务标题');
                 return;
@@ -722,43 +761,83 @@
                     body: JSON.stringify({ title, description, assignee, creator: currentUsername })
                 });
                 const result = await response.json();
+                console.log('📤 添加任务响应:', result);
                 if (result.success) {
+                    console.log('✅ 任务添加成功');
                     document.getElementById('taskTitle').value = '';
                     document.getElementById('taskAssignee').value = '';
                     document.getElementById('taskDesc').value = '';
                     loadTasks();
+                    alert('任务添加成功！');
                 } else {
-                    alert('添加失败: ' + result.error);
+                    console.error('❌ 添加失败:', result.error);
+                    alert('添加失败: ' + (result.error || '未知错误'));
                 }
             } catch (error) {
-                alert('网络错误');
+                console.error('❌ 网络错误:', error);
+                alert('网络错误: ' + error.message);
             }
         }
 
         async function completeTask(id) {
-            if (!confirm('确定完成这个任务吗？')) return;
+            console.log(`🎯 开始完成任务, ID: ${id}, 当前用户: ${currentUsername}`);
+            if (!confirm('确定完成这个任务吗？')) {
+                console.log('❌ 用户取消完成任务');
+                return;
+            }
             try {
-                await fetch(`${API_URL}/tasks/${id}/complete`, { method: 'PUT' });
-                loadTasks();
+                console.log(`📡 发送请求: ${API_URL}/tasks/${id}/complete`);
+                const response = await fetch(`${API_URL}/tasks/${id}/complete`, { 
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const result = await response.json();
+                console.log('📥 完成任务响应:', result);
+                
+                if (result.success) {
+                    console.log('✅ 任务完成成功，重新加载列表');
+                    loadTasks();
+                    alert('任务已完成！');
+                } else {
+                    console.error('❌ 操作失败:', result.error);
+                    alert('操作失败: ' + (result.error || '未知错误'));
+                }
             } catch (error) {
-                alert('操作失败');
+                console.error('❌ 网络错误:', error);
+                alert('操作失败: ' + error.message);
             }
         }
 
         async function deleteTask(id) {
-            if (!confirm('确定删除这个任务吗？')) return;
+            console.log(`🗑 开始删除任务, ID: ${id}`);
+            if (!confirm('确定删除这个任务吗？')) {
+                console.log('❌ 用户取消删除');
+                return;
+            }
             try {
-                await fetch(`${API_URL}/tasks/${id}`, { method: 'DELETE' });
-                loadTasks();
+                const response = await fetch(`${API_URL}/tasks/${id}`, { method: 'DELETE' });
+                const result = await response.json();
+                console.log('📥 删除任务响应:', result);
+                if (result.success) {
+                    console.log('✅ 删除成功，重新加载列表');
+                    loadTasks();
+                    alert('任务删除成功！');
+                } else {
+                    console.error('❌ 删除失败:', result.error);
+                    alert('删除失败: ' + (result.error || '未知错误'));
+                }
             } catch (error) {
-                alert('删除失败');
+                console.error('❌ 网络错误:', error);
+                alert('删除失败: ' + error.message);
             }
         }
 
         // 初始化
+        console.log('🎬 开始初始化页面');
         getUsernameFromURL();
         showHomePage();
         loadVisitStats();
+        console.log('✅ 页面初始化完成');
     </script>
 </body>
 </html>

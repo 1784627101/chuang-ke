@@ -17,7 +17,6 @@
             min-height: 100vh;
         }
 
-        /* 顶部导航栏 */
         .navbar {
             background: #1e293b;
             padding: 16px 32px;
@@ -25,6 +24,8 @@
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid #334155;
+            flex-wrap: wrap;
+            gap: 12px;
         }
 
         .logo h1 {
@@ -36,6 +37,7 @@
             display: flex;
             gap: 16px;
             align-items: center;
+            flex-wrap: wrap;
         }
 
         .message-btn {
@@ -46,15 +48,10 @@
             border-radius: 40px;
             cursor: pointer;
             font-weight: 600;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
 
         .message-btn:hover {
             background: #2563eb;
-            transform: translateY(-1px);
         }
 
         .message-btn.active {
@@ -89,14 +86,12 @@
             font-size: 0.85rem;
         }
 
-        /* 主要内容区 */
         .main-content {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 40px 24px;
         }
 
-        /* ========== 主页样式 ========== */
         .home-page {
             display: block;
         }
@@ -158,7 +153,6 @@
             font-size: 0.85rem;
         }
 
-        /* ========== 消息界面（表格）样式 ========== */
         .message-page {
             display: none;
         }
@@ -215,31 +209,37 @@
             background: #16a34a;
         }
 
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
-        }
-
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #334155;
+            font-size: 0.9rem;
         }
 
         th {
             background: #0f172a;
             color: #38bdf8;
+            padding: 14px 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #334155;
         }
 
         td {
+            padding: 12px;
             color: #cbd5e6;
+            border-bottom: 1px solid #334155;
+            word-break: break-word;
         }
 
         .delete-btn {
             background: #ef4444;
             color: white;
             border: none;
-            padding: 6px 12px;
+            padding: 6px 14px;
             border-radius: 8px;
             cursor: pointer;
             font-size: 0.75rem;
@@ -257,16 +257,22 @@
 
         .back-home-btn {
             background: #64748b;
-            margin-bottom: 16px;
+            margin-bottom: 0;
         }
 
         .back-home-btn:hover {
             background: #475569;
         }
+
+        .content-preview {
+            max-width: 300px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
     </style>
 </head>
 <body>
-    <!-- 顶部导航栏 -->
     <div class="navbar">
         <div class="logo">
             <h1>🏫 君兰中学信息科</h1>
@@ -284,7 +290,7 @@
     </div>
 
     <div class="main-content">
-        <!-- ========== 主页（默认显示） ========== -->
+        <!-- 主页 -->
         <div id="homePage" class="home-page">
             <div class="welcome-card">
                 <div class="welcome-icon">🏫</div>
@@ -294,7 +300,6 @@
                     📩 进入消息中心
                 </button>
             </div>
-
             <div class="info-cards">
                 <div class="info-card">
                     <div class="info-icon">📝</div>
@@ -314,10 +319,10 @@
             </div>
         </div>
 
-        <!-- ========== 消息界面（表格管理，默认隐藏） ========== -->
+        <!-- 消息页面 -->
         <div id="messagePage" class="message-page">
             <div class="card">
-                <button class="message-btn back-home-btn" onclick="showHomePage()" style="background:#64748b;">
+                <button class="message-btn back-home-btn" onclick="showHomePage()">
                     ← 返回主页
                 </button>
             </div>
@@ -332,7 +337,7 @@
 
             <div class="card">
                 <h2>📋 消息列表</h2>
-                <div id="tableContainer">
+                <div class="table-wrapper" id="tableContainer">
                     <div class="loading">加载中...</div>
                 </div>
             </div>
@@ -343,75 +348,76 @@
         const API_URL = 'https://energetic-presence-production.up.railway.app/api/texts';
         let currentUsername = '';
 
-        // 获取URL参数中的用户名
         function getUsernameFromURL() {
             const urlParams = new URLSearchParams(window.location.search);
             const username = urlParams.get('username');
             if (username) {
                 currentUsername = username;
                 localStorage.setItem('username', username);
-                document.getElementById('displayUsername').textContent = username;
-                document.getElementById('welcomeUsername').textContent = username;
+                document.getElementById('displayUsername').innerText = username;
+                document.getElementById('welcomeUsername').innerText = username;
             } else {
                 const savedUsername = localStorage.getItem('username');
                 if (savedUsername) {
                     currentUsername = savedUsername;
-                    document.getElementById('displayUsername').textContent = savedUsername;
-                    document.getElementById('welcomeUsername').textContent = savedUsername;
+                    document.getElementById('displayUsername').innerText = savedUsername;
+                    document.getElementById('welcomeUsername').innerText = savedUsername;
                 } else {
                     window.location.href = 'index.html';
                 }
             }
         }
 
-        // 显示主页（默认状态）
         function showHomePage() {
             document.getElementById('homePage').classList.remove('hide');
             document.getElementById('messagePage').classList.remove('show');
-            // 更新按钮样式
             const msgBtn = document.getElementById('messageBtn');
             msgBtn.classList.remove('active');
         }
 
-        // 显示消息页面（表格界面）
         function showMessagePage() {
             document.getElementById('homePage').classList.add('hide');
             document.getElementById('messagePage').classList.add('show');
-            // 更新按钮样式
             const msgBtn = document.getElementById('messageBtn');
             msgBtn.classList.add('active');
-            // 刷新数据
             loadData();
         }
 
-        // 加载表格数据
         async function loadData() {
             const container = document.getElementById('tableContainer');
             container.innerHTML = '<div class="loading">加载中...</div>';
             try {
                 const response = await fetch(API_URL);
                 const result = await response.json();
-                if (result.success && result.data.length > 0) {
-                    let tableHtml = `<tr><thead> hilab<th>ID</th><th>内容</th><th>创建人</th><th>操作</th></thead><tbody>`;
-                    result.data.forEach(item => {
-                        tableHtml += `<tr>
-                            <td>${item.id}</td>
-                            <td>${escapeHtml(item.content)}</td>
-                            <td>${escapeHtml(item.username)}</td>
+                if (result.success && result.data && result.data.length > 0) {
+                    let html = `<table><thead>
+                        <tr>
+                            <th style="width: 60px;">ID</th>
+                            <th>内容</th>
+                            <th style="width: 120px;">创建人</th>
+                            <th style="width: 80px;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+                    for (const item of result.data) {
+                        html += `
+                        <tr>
+                            <td>${escapeHtml(String(item.id))}</td>
+                            <td style="word-break: break-word; white-space: normal;">${escapeHtml(String(item.content || ''))}</td>
+                            <td>${escapeHtml(String(item.username || ''))}</td>
                             <td><button class="delete-btn" onclick="deleteText(${item.id})">删除</button></td>
                         </tr>`;
-                    });
-                    tableHtml += `</tbody></table>`;
-                    container.innerHTML = tableHtml;
+                    }
+                    html += `</tbody></table>`;
+                    container.innerHTML = html;
                 } else {
                     container.innerHTML = '<div class="loading">暂无数据，请添加</div>';
                 }
             } catch (error) {
-                container.innerHTML = '<div class="loading">加载失败: ' + error.message + '</div>';
+                container.innerHTML = '<div class="loading">加载失败: ' + escapeHtml(error.message) + '</div>';
             }
         }
 
-        // 添加数据
         async function addText() {
             const content = document.getElementById('textContent').value;
             if (!content.trim()) {
@@ -436,7 +442,6 @@
             }
         }
 
-        // 删除数据
         async function deleteText(id) {
             if (!confirm('确定要删除这条数据吗？')) return;
             try {
@@ -452,24 +457,21 @@
             }
         }
 
-        // 退出登录
         function logout() {
             localStorage.removeItem('username');
             window.location.href = 'index.html';
         }
 
-        // 防止XSS攻击
         function escapeHtml(str) {
             if (!str) return '';
-            return str.replace(/[&<>]/g, function(m) {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
-                return m;
-            });
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
         }
 
-        // 页面初始化：默认显示主页
         getUsernameFromURL();
         showHomePage();
     </script>

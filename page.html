@@ -87,7 +87,7 @@
         }
 
         .main-content {
-            max-width: 1200px;
+            max-width: 1000px;
             margin: 0 auto;
             padding: 40px 24px;
         }
@@ -280,13 +280,6 @@
         .back-home-btn:hover {
             background: #475569;
         }
-
-        .refresh-btn {
-            background: #22c55e;
-            padding: 6px 12px;
-            font-size: 0.75rem;
-            margin-left: 12px;
-        }
     </style>
 </head>
 <body>
@@ -319,15 +312,6 @@
             </div>
 
             <div class="info-cards">
-                <!-- 系统内存卡片 -->
-                <div class="info-card">
-                    <div class="info-icon">💾</div>
-                    <h3>系统内存</h3>
-                    <div class="info-value" id="memoryValue">--</div>
-                    <div class="info-unit" id="memoryUnit">GB</div>
-                    <p>Railway 服务实时内存占用</p>
-                </div>
-
                 <!-- 访问统计卡片 -->
                 <div class="info-card">
                     <div class="info-icon">👥</div>
@@ -378,7 +362,6 @@
         const API_URL = 'https://energetic-presence-production.up.railway.app/api';
         let currentUsername = '';
 
-        // 获取URL参数中的用户名
         function getUsernameFromURL() {
             const urlParams = new URLSearchParams(window.location.search);
             const username = urlParams.get('username');
@@ -387,7 +370,6 @@
                 localStorage.setItem('username', username);
                 document.getElementById('displayUsername').innerText = username;
                 document.getElementById('welcomeUsername').innerText = username;
-                // 记录访问
                 trackVisit(username);
             } else {
                 const savedUsername = localStorage.getItem('username');
@@ -402,7 +384,6 @@
             }
         }
 
-        // 记录访问
         async function trackVisit(username) {
             try {
                 await fetch(`${API_URL}/visit-track`, {
@@ -415,23 +396,6 @@
             }
         }
 
-        // 加载内存数据
-        async function loadMemoryData() {
-            try {
-                const response = await fetch(`${API_URL}/railway-memory`);
-                const data = await response.json();
-                if (data.success && data.memoryUsage !== null) {
-                    document.getElementById('memoryValue').innerText = data.memoryUsage.toFixed(2);
-                } else {
-                    document.getElementById('memoryValue').innerText = '--';
-                }
-            } catch (error) {
-                console.error('获取内存数据失败:', error);
-                document.getElementById('memoryValue').innerText = '错误';
-            }
-        }
-
-        // 加载访问统计
         async function loadVisitStats() {
             try {
                 const response = await fetch(`${API_URL}/visit-stats`);
@@ -446,7 +410,6 @@
             }
         }
 
-        // 加载消息总数
         async function loadTotalMessages() {
             try {
                 const response = await fetch(`${API_URL}/texts`);
@@ -461,25 +424,21 @@
             }
         }
 
-        // 刷新所有统计数据
         async function refreshStats() {
             await Promise.all([
-                loadMemoryData(),
                 loadVisitStats(),
                 loadTotalMessages()
             ]);
         }
 
-        // 显示主页
         function showHomePage() {
             document.getElementById('homePage').classList.remove('hide');
             document.getElementById('messagePage').classList.remove('show');
             const msgBtn = document.getElementById('messageBtn');
             msgBtn.classList.remove('active');
-            refreshStats(); // 刷新统计数据
+            refreshStats();
         }
 
-        // 显示消息页面
         function showMessagePage() {
             document.getElementById('homePage').classList.add('hide');
             document.getElementById('messagePage').classList.add('show');
@@ -488,7 +447,6 @@
             loadData();
         }
 
-        // 加载表格数据
         async function loadData() {
             const container = document.getElementById('tableContainer');
             container.innerHTML = '<div class="loading">加载中...</div>';
@@ -520,7 +478,6 @@
             }
         }
 
-        // 添加数据
         async function addText() {
             const content = document.getElementById('textContent').value;
             if (!content.trim()) {
@@ -537,7 +494,7 @@
                 if (result.success) {
                     document.getElementById('textContent').value = '';
                     loadData();
-                    loadTotalMessages(); // 更新消息总数
+                    loadTotalMessages();
                 } else {
                     alert('添加失败: ' + result.error);
                 }
@@ -546,7 +503,6 @@
             }
         }
 
-        // 删除数据
         async function deleteText(id) {
             if (!confirm('确定要删除这条数据吗？')) return;
             try {
@@ -554,7 +510,7 @@
                 const result = await response.json();
                 if (result.success) {
                     loadData();
-                    loadTotalMessages(); // 更新消息总数
+                    loadTotalMessages();
                 } else {
                     alert('删除失败: ' + result.error);
                 }
@@ -563,13 +519,11 @@
             }
         }
 
-        // 退出登录
         function logout() {
             localStorage.removeItem('username');
             window.location.href = 'index.html';
         }
 
-        // 防止XSS攻击
         function escapeHtml(str) {
             if (!str) return '';
             return str
@@ -580,11 +534,9 @@
                 .replace(/'/g, '&#39;');
         }
 
-        // 页面初始化
         getUsernameFromURL();
         showHomePage();
-        refreshStats(); // 加载统计数据
-        // 每30秒自动刷新统计数据
+        refreshStats();
         setInterval(refreshStats, 30000);
     </script>
 </body>

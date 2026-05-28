@@ -92,7 +92,6 @@
             padding: 40px 24px;
         }
 
-        /* 主页样式 */
         .home-page {
             display: block;
         }
@@ -168,11 +167,6 @@
             margin: 16px 0 8px;
         }
 
-        .info-unit {
-            font-size: 0.8rem;
-            color: #64748b;
-        }
-
         .task-stats {
             margin-top: 12px;
             padding-top: 12px;
@@ -201,7 +195,6 @@
             color: #f97316;
         }
 
-        /* 消息页面样式 */
         .message-page {
             display: none;
         }
@@ -210,7 +203,6 @@
             display: block;
         }
 
-        /* 任务页面样式 */
         .task-page {
             display: none;
         }
@@ -271,6 +263,10 @@
             font-weight: 600;
         }
 
+        .add-form button:hover {
+            background: #16a34a;
+        }
+
         .table-wrapper {
             overflow-x: auto;
         }
@@ -306,6 +302,10 @@
             font-size: 0.75rem;
         }
 
+        .delete-btn:hover {
+            background: #dc2626;
+        }
+
         .complete-btn {
             background: #22c55e;
             color: white;
@@ -315,6 +315,10 @@
             cursor: pointer;
             font-size: 0.75rem;
             margin-right: 5px;
+        }
+
+        .complete-btn:hover {
+            background: #16a34a;
         }
 
         .loading {
@@ -430,7 +434,6 @@
     </div>
 
     <div class="main-content">
-        <!-- ========== 主页 ========== -->
         <div id="homePage" class="home-page">
             <div class="welcome-card">
                 <div class="welcome-icon">🏫</div>
@@ -475,7 +478,6 @@
             </div>
         </div>
 
-        <!-- ========== 消息页面 ========== -->
         <div id="messagePage" class="message-page">
             <div class="card">
                 <button class="message-btn back-home-btn" onclick="showHomePage()">← 返回主页</button>
@@ -497,7 +499,6 @@
             </div>
         </div>
 
-        <!-- ========== 任务页面 ========== -->
         <div id="taskPage" class="task-page">
             <div class="card">
                 <button class="message-btn back-home-btn" onclick="showHomePage()">← 返回主页</button>
@@ -537,7 +538,6 @@
 
         console.log('🚀 页面初始化开始');
 
-        // ========== 通用函数 ==========
         function getUsernameFromURL() {
             const urlParams = new URLSearchParams(window.location.search);
             const username = urlParams.get('username');
@@ -592,7 +592,6 @@
             }
         }
 
-        // 更新主页任务统计
         function updateTaskStats() {
             if (!allTasks.length) {
                 document.getElementById('totalUnfinishedTasks').innerText = '0';
@@ -601,20 +600,14 @@
                 return;
             }
 
-            // 未完成任务总数（状态为"待完成"的任务）
             const totalUnfinished = allTasks.filter(t => t.status === '待完成').length;
-            
-            // 我需完成的任务（负责人是当前用户且状态为"待完成"）
             const myPending = allTasks.filter(t => t.assignee === currentUsername && t.status === '待完成').length;
-            
-            // 我布置的任务总数（创建人是当前用户）
             const myCreated = allTasks.filter(t => t.creator === currentUsername).length;
             
             document.getElementById('totalUnfinishedTasks').innerText = totalUnfinished;
             document.getElementById('myPendingTasks').innerText = myPending;
             document.getElementById('myCreatedTasks').innerText = myCreated;
             
-            // 如果待完成任务数 > 0，添加警告样式
             const myPendingElement = document.getElementById('myPendingTasks');
             if (myPending > 0) {
                 myPendingElement.classList.add('warning');
@@ -622,7 +615,7 @@
                 myPendingElement.classList.remove('warning');
             }
             
-            console.log('📊 任务统计更新:', { totalUnfinished, myPending, myCreated });
+            console.log('📊 任务统计:', { totalUnfinished, myPending, myCreated });
         }
 
         function showHomePage() {
@@ -633,7 +626,7 @@
             document.getElementById('messageBtn').classList.remove('active');
             document.getElementById('taskBtn').classList.remove('active');
             loadVisitStats();
-            updateTaskStats(); // 更新任务统计
+            updateTaskStats();
         }
 
         function showMessagePage() {
@@ -682,16 +675,23 @@
                 const result = await response.json();
                 console.log('📥 消息数据响应:', result);
                 if (result.success && result.data && result.data.length > 0) {
-                    // 隐藏 ID 列 - 只显示内容、创建人和操作
-                    let html = `<table><thead><tr><th>内容</th><th>创建人</th><th>操作</th></thead><tbody>`;
+                    let html = `<table><thead>`;
+                    html += `<tr>`;
+                    html += `<th style="width: 60%">内容</th>`;
+                    html += `<th style="width: 25%">创建人</th>`;
+                    html += `<th style="width: 15%">操作</th>`;
+                    html += `</tr>`;
+                    html += `</thead><tbody>`;
+                    
                     for (const item of result.data) {
-                        html += `<tr>
-                            <tr>${escapeHtml(String(item.content || ''))}</td>
-                            <td>${escapeHtml(String(item.username || ''))}</td>
-                            <td><button class="delete-btn" onclick="deleteText(${item.id})">删除</button></td>
-                        </tr>`;
+                        html += `<tr>`;
+                        html += `<td style="word-break: break-word;">${escapeHtml(String(item.content || ''))}</td>`;
+                        html += `<td>${escapeHtml(String(item.username || ''))}</td>`;
+                        html += `<td><button class="delete-btn" onclick="deleteText(${item.id})">删除</button></td>`;
+                        html += `</tr>`;
                     }
-                    html += `</tbody></table>`;
+                    html += `</tbody>`;
+                    html += `</table>`;
                     container.innerHTML = html;
                     console.log(`✅ 加载了 ${result.data.length} 条消息`);
                 } else {
@@ -739,6 +739,7 @@
                 await fetch(`${API_URL}/texts/${id}`, { method: 'DELETE' });
                 console.log('✅ 删除成功');
                 loadMessages();
+                alert('删除成功！');
             } catch (error) {
                 console.error('❌ 删除失败:', error);
                 alert('删除失败');
@@ -758,7 +759,7 @@
                     allTasks = result.data;
                     console.log(`✅ 加载了 ${allTasks.length} 个任务`);
                     renderTasks();
-                    updateTaskStats(); // 更新主页的任务统计
+                    updateTaskStats();
                 } else {
                     console.error('❌ 加载任务失败:', result.error);
                     container.innerHTML = '<div class="loading">加载失败: ' + (result.error || '未知错误') + '</div>';

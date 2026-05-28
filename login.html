@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>登录 - 君兰中学信息科</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: system-ui;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .login-container {
+            background: #0b1120;
+            border-radius: 24px;
+            border: 1px solid #334155;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+        }
+        h1 { color: #38bdf8; text-align: center; margin-bottom: 8px; }
+        .subtitle { color: #94a3b8; text-align: center; margin-bottom: 32px; }
+        .input-group { margin-bottom: 20px; }
+        label { display: block; color: #cbd5e1; margin-bottom: 8px; }
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            background: #020617;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            color: #e2e8f0;
+            font-size: 1rem;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        button:hover { background: #2563eb; }
+        .message {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 12px;
+            text-align: center;
+            display: none;
+        }
+        .message.error {
+            background: rgba(239,68,68,0.2);
+            color: #f87171;
+            border: 1px solid #ef4444;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h1>🔐 君兰中学</h1>
+        <div class="subtitle">信息科管理系统</div>
+        <div class="input-group">
+            <label>👤 用户名</label>
+            <input type="text" id="username" placeholder="请输入用户名">
+        </div>
+        <div class="input-group">
+            <label>🔒 密码</label>
+            <input type="password" id="password" placeholder="请输入密码">
+        </div>
+        <button onclick="login()">登 录</button>
+        <div id="message" class="message"></div>
+    </div>
+
+    <script>
+        const API_URL = 'https://energetic-presence-production.up.railway.app/api/login';
+
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const messageDiv = document.getElementById('message');
+
+            if (!username || !password) {
+                messageDiv.textContent = '请输入用户名和密码';
+                messageDiv.className = 'message error';
+                return;
+            }
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    localStorage.setItem('username', data.username);
+                    window.location.href = `page.html?username=${encodeURIComponent(data.username)}`;
+                } else {
+                    messageDiv.textContent = data.message;
+                    messageDiv.className = 'message error';
+                }
+            } catch (error) {
+                messageDiv.textContent = '网络错误: ' + error.message;
+                messageDiv.className = 'message error';
+            }
+        }
+
+        document.getElementById('password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') login();
+        });
+    </script>
+</body>
+</html>

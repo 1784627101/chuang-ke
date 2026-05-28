@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>君兰中学信息科</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: system-ui;
+            background: #0f172a;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .header {
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 20px 30px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .header h1 { color: #38bdf8; font-size: 1.5rem; }
+        .user-info { color: #94a3b8; display: flex; align-items: center; gap: 16px; }
+        .logout-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .logout-btn:hover { background: #dc2626; }
+        .card {
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .card h2 { color: #e2e8f0; margin-bottom: 16px; font-size: 1.2rem; }
+        .add-form { display: flex; gap: 12px; flex-wrap: wrap; }
+        .add-form input {
+            flex: 1;
+            padding: 12px 16px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            color: #e2e8f0;
+            font-size: 1rem;
+            outline: none;
+        }
+        .add-form input:focus { border-color: #3b82f6; }
+        .add-form button {
+            background: #22c55e;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .add-form button:hover { background: #16a34a; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #334155; }
+        th { background: #0f172a; color: #38bdf8; }
+        td { color: #cbd5e6; }
+        .delete-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.75rem;
+        }
+        .delete-btn:hover { background: #dc2626; }
+        .loading { text-align: center; color: #94a3b8; padding: 40px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏫 君兰中学信息科</h1>
+            <div class="user-info">
+                <span>👤 <span id="displayUsername"></span></span>
+                <button class="logout-btn" onclick="logout()">退出登录</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>➕ 添加文本</h2>
+            <div class="add-form">
+                <input type="text" id="textContent" placeholder="请输入内容" autocomplete="off">
+                <button onclick="addText()">添加</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📋 数据列表</h2>
+            <div id="tableContainer"><div class="loading">加载中...</div></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://energetic-presence-production.up.railway.app/api/texts';
+        let currentUsername = '';
+
+        function getUsernameFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const username = urlParams.get('username');
+            if (username) {
+                currentUsername = username;
+                localStorage.setItem('username', username);
+                document.getElementById('displayUsername').textContent = username;
+            } else {
+                const savedUsername = localStorage.getItem('username');
+                if (savedUsername) {
+                    currentUsername = savedUsername;
+                    document.getElementById('displayUsername').textContent = savedUsername;
+                } else {
+                    window.location.href = 'login.html';
+                }
+            }
+        }
+
+        async function loadData() {
+            const container = document.getElementById('tableContainer');
+            container.innerHTML = '<div class="loading">加载中...</div>';
+            try {
+                const response = await fetch(API_URL);
+                const result = await response.json();
+                if (result.success && result.data.length > 0) {
+                    let tableHtml = `<table><thead><tr><th>ID</th><th>内容</th><th>创建人</th><th>操作</th></tr></thead><tbody>`;
+                    result.data.forEach(item => {
+                        tableHtml += `<tr>
+                            <td>${item.id}</td>
+                            <td>${escapeHtml(item.content)}</td>
+                            <td>${escapeHtml(item.username)}</td>
+                            <td><button class="delete-btn" onclick="deleteText(${item.id})">删除</button></td>
+                        </tr>`;
+                    });
+                    tableHtml += `</tbody></table>`;
+                    container.innerHTML = tableHtml;
+                } else {
+                    container.innerHTML = '<div class="loading">暂无数据，请添加</div>';
+                }
+            } catch (error) {
+                container.innerHTML = '<div class="loading">加载失败: ' + error.message + '</div>';
+            }
+        }
+
+        async function addText() {
+            const content = document.getElementById('textContent').value;
+            if (!content.trim()) {
+                alert('请输入内容');
+                return;
+            }
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: content, username: currentUsername })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    document.getElementById('textContent').value = '';
+                    loadData();
+                } else {
+                    alert('添加失败: ' + result.error);
+                }
+            } catch (error) {
+                alert('网络错误: ' + error.message);
+            }
+        }
+
+        async function deleteText(id) {
+            if (!confirm('确定要删除这条数据吗？')) return;
+            try {
+                const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+                const result = await response.json();
+                if (result.success) {
+                    loadData();
+                } else {
+                    alert('删除失败: ' + result.error);
+                }
+            } catch (error) {
+                alert('网络错误: ' + error.message);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('username');
+            window.location.href = 'login.html';
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        getUsernameFromURL();
+        loadData();
+    </script>
+</body>
+</html>

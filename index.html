@@ -60,6 +60,17 @@
             border: 1px solid #ef4444;
             display: block;
         }
+        .dev-btn {
+            margin-top: 16px;
+            background: transparent;
+            color: #64748b;
+            font-size: 0.8rem;
+            border: 1px solid #334155;
+        }
+        .dev-btn:hover {
+            background: #1e293b;
+            color: #94a3b8;
+        }
     </style>
 </head>
 <body>
@@ -75,6 +86,7 @@
             <input type="password" id="password" placeholder="请输入密码">
         </div>
         <button onclick="login()">登录</button>
+        <button class="dev-btn" onclick="devLogin()">开发者登录</button>
         <div id="message" class="message"></div>
     </div>
 
@@ -103,6 +115,40 @@
                 if (data.success) {
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('username', data.username);
+                    window.location.href = 'page.html';
+                } else {
+                    messageDiv.textContent = data.message;
+                    messageDiv.className = 'message error';
+                }
+            } catch (error) {
+                messageDiv.textContent = '网络错误: ' + error.message;
+                messageDiv.className = 'message error';
+            }
+        }
+
+        async function devLogin() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const messageDiv = document.getElementById('message');
+
+            if (!username || !password) {
+                messageDiv.textContent = '请输入开发者账号和密码';
+                messageDiv.className = 'message error';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/dev-login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('username', data.username);
+                    localStorage.setItem('isDev', 'true');
                     window.location.href = 'page.html';
                 } else {
                     messageDiv.textContent = data.message;

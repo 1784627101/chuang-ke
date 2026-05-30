@@ -101,8 +101,9 @@
                 const data = await response.json();
 
                 if (data.success) {
+                    localStorage.setItem('token', data.token);
                     localStorage.setItem('username', data.username);
-                    window.location.href = `page.html?username=${encodeURIComponent(data.username)}`;
+                    window.location.href = 'page.html';
                 } else {
                     messageDiv.textContent = data.message;
                     messageDiv.className = 'message error';

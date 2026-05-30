@@ -160,41 +160,6 @@
             font-size: 0.85rem;
         }
 
-        .info-value {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #38bdf8;
-            margin: 16px 0 8px;
-        }
-
-        .task-stats {
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px solid #334155;
-        }
-
-        .task-stat-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-            font-size: 0.85rem;
-        }
-
-        .task-stat-label {
-            color: #94a3b8;
-        }
-
-        .task-stat-number {
-            color: #38bdf8;
-            font-weight: bold;
-            font-size: 1.1rem;
-        }
-
-        .task-stat-number.warning {
-            color: #f97316;
-        }
-
         .message-page {
             display: none;
         }
@@ -263,10 +228,6 @@
             font-weight: 600;
         }
 
-        .add-form button:hover {
-            background: #16a34a;
-        }
-
         .table-wrapper {
             overflow-x: auto;
         }
@@ -302,10 +263,6 @@
             font-size: 0.75rem;
         }
 
-        .delete-btn:hover {
-            background: #dc2626;
-        }
-
         .complete-btn {
             background: #22c55e;
             color: white;
@@ -315,10 +272,6 @@
             cursor: pointer;
             font-size: 0.75rem;
             margin-right: 5px;
-        }
-
-        .complete-btn:hover {
-            background: #16a34a;
         }
 
         .loading {
@@ -424,8 +377,8 @@
         </div>
         <div class="nav-buttons">
             <div class="user-info">
-                
-              <span class="username" id="displayUsername"></span>
+                <span></span>
+                <span class="username" id="displayUsername"></span>
             </div>
             <button class="message-btn" id="messageBtn" onclick="showMessagePage()">消息</button>
             <button class="message-btn" id="taskBtn" onclick="showTaskPage()">任务</button>
@@ -436,36 +389,22 @@
     <div class="main-content">
         <div id="homePage" class="home-page">
             <div class="welcome-card">
-                
+                <div class="welcome-icon"></div>
                 <h2>欢迎回来，<span id="welcomeUsername"></span>！</h2>
                 <p>君兰中学信息科管理系统</p>
             </div>
 
             <div class="info-cards">
                 <div class="info-card" onclick="showMessagePage()">
-                    
+                    <div class="info-icon"></div>
                     <h3>消息管理</h3>
                     <p>查看和发布通知消息</p>
                 </div>
 
                 <div class="info-card" onclick="showTaskPage()">
-                    
+                    <div class="info-icon"></div>
                     <h3>任务管理</h3>
                     <p>布置任务、跟踪进度</p>
-                    <div class="task-stats">
-                        <div class="task-stat-item">
-                            <span class="task-stat-label">未完成任务总数</span>
-                            <span class="task-stat-number" id="totalUnfinishedTasks">--</span>
-                        </div>
-                        <div class="task-stat-item">
-                            <span class="task-stat-label">我需完成的任务</span>
-                            <span class="task-stat-number" id="myPendingTasks">--</span>
-                        </div>
-                        <div class="task-stat-item">
-                            <span class="task-stat-label">我布置的任务</span>
-                            <span class="task-stat-number" id="myCreatedTasks">--</span>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -528,101 +467,61 @@
         let allTasks = [];
         let currentFilter = 'all';
 
-        console.log('🚀 页面初始化开始');
-
-        function getUsernameFromURL() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const username = urlParams.get('username');
-            console.log('📌 从URL获取用户名:', username);
-            if (username) {
-                currentUsername = username;
-                localStorage.setItem('username', username);
-                document.getElementById('displayUsername').innerText = username;
-                document.getElementById('welcomeUsername').innerText = username;
-                trackVisit(username);
-            } else {
-                const savedUsername = localStorage.getItem('username');
-                console.log('📌 从localStorage获取用户名:', savedUsername);
-                if (savedUsername) {
-                    currentUsername = savedUsername;
-                    document.getElementById('displayUsername').innerText = savedUsername;
-                    document.getElementById('welcomeUsername').innerText = savedUsername;
-                    trackVisit(savedUsername);
-                } else {
-                    console.log('❌ 未找到用户名，跳转到登录页');
-                    window.location.href = 'index.html';
-                }
-            }
-            console.log('✅ 当前登录用户:', currentUsername);
-        }
-
-        async function trackVisit(username) {
-            try {
-                await fetch(`${API_URL}/visit-track`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username })
-                });
-                console.log('📊 访问已记录:', username);
-            } catch (e) {
-                console.error('记录访问失败:', e);
-            }
-        }
-
-        async function loadVisitStats() {
-            try {
-                const response = await fetch(`${API_URL}/visit-stats`);
-                const data = await response.json();
-                if (data.success) {
-                    document.getElementById('totalVisits').innerText = data.totalVisits || 0;
-                    document.getElementById('totalVisitsText').innerText = data.totalVisits || 0;
-                    document.getElementById('todayVisits').innerText = data.todayVisits || 0;
-                    console.log('📊 访问统计:', data);
-                }
-            } catch (error) {
-                console.error('加载访问统计失败:', error);
-            }
-        }
-
-        function updateTaskStats() {
-            if (!allTasks.length) {
-                document.getElementById('totalUnfinishedTasks').innerText = '0';
-                document.getElementById('myPendingTasks').innerText = '0';
-                document.getElementById('myCreatedTasks').innerText = '0';
-                return;
-            }
-
-            const totalUnfinished = allTasks.filter(t => t.status === '待完成').length;
-            const myPending = allTasks.filter(t => t.assignee === currentUsername && t.status === '待完成').length;
-            const myCreated = allTasks.filter(t => t.creator === currentUsername).length;
+        // ========== 获取用户信息（从 localStorage 读取 token）==========
+        function getUserFromStorage() {
+            const token = localStorage.getItem('token');
+            const username = localStorage.getItem('username');
             
-            document.getElementById('totalUnfinishedTasks').innerText = totalUnfinished;
-            document.getElementById('myPendingTasks').innerText = myPending;
-            document.getElementById('myCreatedTasks').innerText = myCreated;
-            
-            const myPendingElement = document.getElementById('myPendingTasks');
-            if (myPending > 0) {
-                myPendingElement.classList.add('warning');
-            } else {
-                myPendingElement.classList.remove('warning');
+            if (!token || !username) {
+                window.location.href = 'index.html';
+                return null;
             }
             
-            console.log('📊 任务统计:', { totalUnfinished, myPending, myCreated });
+            currentUsername = username;
+            document.getElementById('displayUsername').innerText = username;
+            document.getElementById('welcomeUsername').innerText = username;
+            
+            return token;
+        }
+
+        // ========== 带认证的请求封装 ==========
+        async function authFetch(url, options = {}) {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = 'index.html';
+                throw new Error('未登录');
+            }
+            
+            const headers = {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token,
+                ...options.headers
+            };
+            
+            const response = await fetch(`${API_URL}${url}`, {
+                ...options,
+                headers
+            });
+            
+            if (response.status === 401) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('username');
+                window.location.href = 'index.html';
+                throw new Error('登录已过期，请重新登录');
+            }
+            
+            return response;
         }
 
         function showHomePage() {
-            console.log('🏠 切换到主页');
             document.getElementById('homePage').classList.remove('hide');
             document.getElementById('messagePage').classList.remove('show');
             document.getElementById('taskPage').classList.remove('show');
             document.getElementById('messageBtn').classList.remove('active');
             document.getElementById('taskBtn').classList.remove('active');
-            loadVisitStats();
-            updateTaskStats();
         }
 
         function showMessagePage() {
-            console.log('📩 切换到消息页面');
             document.getElementById('homePage').classList.add('hide');
             document.getElementById('messagePage').classList.add('show');
             document.getElementById('taskPage').classList.remove('show');
@@ -632,7 +531,6 @@
         }
 
         function showTaskPage() {
-            console.log('📋 切换到任务页面');
             document.getElementById('homePage').classList.add('hide');
             document.getElementById('messagePage').classList.remove('show');
             document.getElementById('taskPage').classList.add('show');
@@ -652,7 +550,7 @@
         }
 
         function logout() {
-            console.log('🚪 退出登录');
+            localStorage.removeItem('token');
             localStorage.removeItem('username');
             window.location.href = 'index.html';
         }
@@ -661,37 +559,24 @@
         async function loadMessages() {
             const container = document.getElementById('tableContainer');
             container.innerHTML = '<div class="loading">加载中...</div>';
-            console.log('📩 开始加载消息列表');
             try {
                 const response = await fetch(`${API_URL}/texts`);
                 const result = await response.json();
-                console.log('📥 消息数据响应:', result);
                 if (result.success && result.data && result.data.length > 0) {
-                    let html = `<table><thead>`;
-                    html += `<tr>`;
-                    html += `<th style="width: 60%">内容</th>`;
-                    html += `<th style="width: 25%">创建人</th>`;
-                    html += `<th style="width: 15%">操作</th>`;
-                    html += `</tr>`;
-                    html += `</thead><tbody>`;
-                    
+                    let html = `<table><thead><tr><th style="width: 60%">内容</th><th style="width: 25%">创建人</th><th style="width: 15%">操作</th></tr></thead><tbody>`;
                     for (const item of result.data) {
-                        html += `<tr>`;
-                        html += `<td style="word-break: break-word;">${escapeHtml(String(item.content || ''))}</td>`;
-                        html += `<td>${escapeHtml(String(item.username || ''))}</td>`;
-                        html += `<td><button class="delete-btn" onclick="deleteText(${item.id})">删除</button></td>`;
-                        html += `</tr>`;
+                        html += `<tr>
+                            <td style="word-break: break-word;">${escapeHtml(String(item.content || ''))}</td>
+                            <td>${escapeHtml(String(item.username || ''))}</td>
+                            <td>${item.username === currentUsername ? `<button class="delete-btn" onclick="deleteText(${item.id})">删除</button>` : '<span style="color:#64748b">无权删除</span>'}</td>
+                        </tr>`;
                     }
-                    html += `</tbody>`;
-                    html += `</table>`;
+                    html += `</tbody></table>`;
                     container.innerHTML = html;
-                    console.log(`✅ 加载了 ${result.data.length} 条消息`);
                 } else {
                     container.innerHTML = '<div class="loading">暂无数据，请添加</div>';
-                    console.log('📭 暂无消息数据');
                 }
             } catch (error) {
-                console.error('❌ 加载消息失败:', error);
                 container.innerHTML = '<div class="loading">加载失败</div>';
             }
         }
@@ -702,15 +587,12 @@
                 alert('请输入内容');
                 return;
             }
-            console.log('📝 添加消息:', content);
             try {
-                const response = await fetch(`${API_URL}/texts`, {
+                const response = await authFetch('/texts', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ content: content, username: currentUsername })
+                    body: JSON.stringify({ content: content })
                 });
                 const result = await response.json();
-                console.log('📤 添加消息响应:', result);
                 if (result.success) {
                     document.getElementById('textContent').value = '';
                     loadMessages();
@@ -719,21 +601,22 @@
                     alert('添加失败: ' + result.error);
                 }
             } catch (error) {
-                console.error('❌ 添加消息失败:', error);
                 alert('网络错误: ' + error.message);
             }
         }
 
         async function deleteText(id) {
             if (!confirm('确定要删除吗？')) return;
-            console.log('🗑 删除消息 ID:', id);
             try {
-                await fetch(`${API_URL}/texts/${id}`, { method: 'DELETE' });
-                console.log('✅ 删除成功');
-                loadMessages();
-                alert('删除成功！');
+                const response = await authFetch(`/texts/${id}`, { method: 'DELETE' });
+                const result = await response.json();
+                if (result.success) {
+                    loadMessages();
+                    alert('删除成功！');
+                } else {
+                    alert('删除失败: ' + result.error);
+                }
             } catch (error) {
-                console.error('❌ 删除失败:', error);
                 alert('删除失败');
             }
         }
@@ -742,22 +625,16 @@
         async function loadTasks() {
             const container = document.getElementById('tasksContainer');
             container.innerHTML = '<div class="loading">加载中...</div>';
-            console.log('📋 开始加载任务列表');
             try {
                 const response = await fetch(`${API_URL}/tasks`);
                 const result = await response.json();
-                console.log('📥 任务数据响应:', result);
                 if (result.success) {
                     allTasks = result.data;
-                    console.log(`✅ 加载了 ${allTasks.length} 个任务`);
                     renderTasks();
-                    updateTaskStats();
                 } else {
-                    console.error('❌ 加载任务失败:', result.error);
                     container.innerHTML = '<div class="loading">加载失败: ' + (result.error || '未知错误') + '</div>';
                 }
             } catch (error) {
-                console.error('❌ 网络错误:', error);
                 container.innerHTML = '<div class="loading">加载失败: ' + error.message + '</div>';
             }
         }
@@ -774,8 +651,6 @@
                 filteredTasks = allTasks.filter(t => t.creator === currentUsername);
             }
             
-            console.log(`📊 过滤后任务数: ${filteredTasks.length}, 当前过滤: ${currentFilter}`);
-            
             const container = document.getElementById('tasksContainer');
             if (filteredTasks.length === 0) {
                 container.innerHTML = '<div class="loading">暂无任务</div>';
@@ -788,7 +663,7 @@
                 html += `
                     <div class="task-item">
                         <div class="task-info">
-                            <div class="task-title">📌 ${escapeHtml(task.title)}</div>
+                            <div class="task-title">${escapeHtml(task.title)}</div>
                             ${task.description ? `<div class="task-desc">${escapeHtml(task.description)}</div>` : ''}
                             <div class="task-meta">
                                 <span>负责人: ${escapeHtml(task.assignee)}</span>
@@ -797,8 +672,8 @@
                             </div>
                         </div>
                         <div class="task-actions">
-                            ${task.status === '待完成' && task.assignee === currentUsername ? `<button class="complete-btn" onclick="completeTask(${task.id})">✅ 完成</button>` : ''}
-                            ${task.creator === currentUsername ? `<button class="delete-btn" onclick="deleteTask(${task.id})">🗑 删除</button>` : ''}
+                            ${task.status === '待完成' && task.assignee === currentUsername ? `<button class="complete-btn" onclick="completeTask(${task.id})">完成</button>` : ''}
+                            ${task.creator === currentUsername ? `<button class="delete-btn" onclick="deleteTask(${task.id})">删除</button>` : ''}
                         </div>
                     </div>
                 `;
@@ -807,7 +682,6 @@
         }
 
         function filterTasks(filter, btnElement) {
-            console.log(`🔍 切换过滤: ${filter}`);
             currentFilter = filter;
             document.querySelectorAll('#taskPage .tab-btn').forEach(btn => btn.classList.remove('active'));
             if (btnElement) btnElement.classList.add('active');
@@ -819,8 +693,6 @@
             const assignee = document.getElementById('taskAssignee').value;
             const description = document.getElementById('taskDesc').value;
             
-            console.log('📝 准备添加任务:', { title, assignee, description, creator: currentUsername });
-            
             if (!title.trim()) {
                 alert('请输入任务标题');
                 return;
@@ -830,89 +702,62 @@
                 return;
             }
             try {
-                const response = await fetch(`${API_URL}/tasks`, {
+                const response = await authFetch('/tasks', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ title, description, assignee, creator: currentUsername })
+                    body: JSON.stringify({ title, description, assignee })
                 });
                 const result = await response.json();
-                console.log('📤 添加任务响应:', result);
                 if (result.success) {
-                    console.log('✅ 任务添加成功');
                     document.getElementById('taskTitle').value = '';
                     document.getElementById('taskAssignee').value = '';
                     document.getElementById('taskDesc').value = '';
                     loadTasks();
                     alert('任务添加成功！');
                 } else {
-                    console.error('❌ 添加失败:', result.error);
                     alert('添加失败: ' + (result.error || '未知错误'));
                 }
             } catch (error) {
-                console.error('❌ 网络错误:', error);
                 alert('网络错误: ' + error.message);
             }
         }
 
         async function completeTask(id) {
-            console.log(`🎯 开始完成任务, ID: ${id}, 当前用户: ${currentUsername}`);
-            if (!confirm('确定完成这个任务吗？')) {
-                console.log('❌ 用户取消完成任务');
-                return;
-            }
+            if (!confirm('确定完成这个任务吗？')) return;
             try {
-                console.log(`📡 发送请求: ${API_URL}/tasks/${id}/complete`);
-                const response = await fetch(`${API_URL}/tasks/${id}/complete`, { 
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' }
-                });
+                const response = await authFetch(`/tasks/${id}/complete`, { method: 'PUT' });
                 const result = await response.json();
-                console.log('📥 完成任务响应:', result);
-                
                 if (result.success) {
-                    console.log('✅ 任务完成成功，重新加载列表');
                     loadTasks();
                     alert('任务已完成！');
                 } else {
-                    console.error('❌ 操作失败:', result.error);
                     alert('操作失败: ' + (result.error || '未知错误'));
                 }
             } catch (error) {
-                console.error('❌ 网络错误:', error);
                 alert('操作失败: ' + error.message);
             }
         }
 
         async function deleteTask(id) {
-            console.log(`🗑 开始删除任务, ID: ${id}`);
-            if (!confirm('确定删除这个任务吗？')) {
-                console.log('❌ 用户取消删除');
-                return;
-            }
+            if (!confirm('确定删除这个任务吗？')) return;
             try {
-                const response = await fetch(`${API_URL}/tasks/${id}`, { method: 'DELETE' });
+                const response = await authFetch(`/tasks/${id}`, { method: 'DELETE' });
                 const result = await response.json();
-                console.log('📥 删除任务响应:', result);
                 if (result.success) {
-                    console.log('✅ 删除成功，重新加载列表');
                     loadTasks();
                     alert('任务删除成功！');
                 } else {
-                    console.error('❌ 删除失败:', result.error);
                     alert('删除失败: ' + (result.error || '未知错误'));
                 }
             } catch (error) {
-                console.error('❌ 网络错误:', error);
                 alert('删除失败: ' + error.message);
             }
         }
 
         // 初始化
-        console.log('🎬 开始初始化页面');
-        getUsernameFromURL();
-        showHomePage();
-        loadVisitStats();
-        console.log('✅ 页面初始化完成');
+        const token = getUserFromStorage();
+        if (token) {
+            showHomePage();
+        }
     </script>
 </body>
 </html>

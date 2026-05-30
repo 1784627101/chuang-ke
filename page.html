@@ -86,6 +86,15 @@
             font-size: 0.85rem;
         }
 
+        .dev-badge {
+            background: #f97316;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            margin-left: 8px;
+        }
+
         .main-content {
             max-width: 1200px;
             margin: 0 auto;
@@ -369,6 +378,7 @@
             <div class="user-info">
                 <span></span>
                 <span class="username" id="displayUsername"></span>
+                <span id="devBadge" class="dev-badge" style="display: none;">开发者模式</span>
             </div>
             <button class="message-btn" id="messageBtn" onclick="showMessagePage()">消息</button>
             <button class="message-btn" id="taskBtn" onclick="showTaskPage()">任务</button>
@@ -454,10 +464,10 @@
         let allTasks = [];
         let currentFilter = 'all';
 
-        // 获取用户信息（从 localStorage 读取 token 和 username）
         function getUserFromStorage() {
             const token = localStorage.getItem('token');
             const username = localStorage.getItem('username');
+            const isDev = localStorage.getItem('isDev');
             
             if (!token || !username) {
                 window.location.href = 'index.html';
@@ -468,10 +478,13 @@
             document.getElementById('displayUsername').innerText = username;
             document.getElementById('welcomeUsername').innerText = username;
             
+            if (isDev === 'true') {
+                document.getElementById('devBadge').style.display = 'inline-block';
+            }
+            
             return token;
         }
 
-        // 带认证的请求封装
         async function authFetch(url, options = {}) {
             const token = localStorage.getItem('token');
             if (!token) {
@@ -493,6 +506,7 @@
             if (response.status === 401) {
                 localStorage.removeItem('token');
                 localStorage.removeItem('username');
+                localStorage.removeItem('isDev');
                 window.location.href = 'index.html';
                 throw new Error('登录已过期，请重新登录');
             }
@@ -539,10 +553,10 @@
         function logout() {
             localStorage.removeItem('token');
             localStorage.removeItem('username');
+            localStorage.removeItem('isDev');
             window.location.href = 'index.html';
         }
 
-        // ========== 消息管理 ==========
         async function loadMessages() {
             const container = document.getElementById('tableContainer');
             container.innerHTML = '<div class="loading">加载中...</div>';
@@ -550,11 +564,8 @@
                 const response = await fetch(`${API_URL}/texts`);
                 const result = await response.json();
                 if (result.success && result.data && result.data.length > 0) {
-                    let html = `<table><thead>`;
-                    html += `<tr><th style="width: 60%">内容</th><th style="width: 25%">创建人</th><th style="width: 15%">操作</th>`;
-                    html += `</thead><tbody>`;
+                    let html = `<table><thead><tr><th style="width: 60%">内容</th><th style="width: 25%">创建人</th><th style="width: 15%">操作</th></tr></thead><tbody>`;
                     for (const item of result.data) {
-                        // 只有自己创建的消息才能删除
                         const canDelete = item.username === currentUsername;
                         html += `<tr>
                             <td style="word-break: break-word;">${escapeHtml(String(item.content || ''))}</td>
@@ -562,8 +573,7 @@
                             <td>${canDelete ? `<button class="delete-btn" onclick="deleteText(${item.id})">删除</button>` : '<span style="color:#64748b">无权删除</span>'}</td>
                         </tr>`;
                     }
-                    html += `</tbody>`;
-                    html += `</table>`;
+                    html += `</tbody></table>`;
                     container.innerHTML = html;
                 } else {
                     container.innerHTML = '<div class="loading">暂无数据，请添加</div>';
@@ -613,7 +623,6 @@
             }
         }
 
-        // ========== 任务管理 ==========
         async function loadTasks() {
             const container = document.getElementById('tasksContainer');
             container.innerHTML = '<div class="loading">加载中...</div>';
@@ -745,7 +754,6 @@
             }
         }
 
-        // 初始化
         const token = getUserFromStorage();
         if (token) {
             showHomePage();

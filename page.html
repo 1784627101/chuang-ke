@@ -454,24 +454,50 @@
         let allTasks = [];
         let currentFilter = 'all';
 
-        function getUsernameFromURL() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const username = urlParams.get('username');
-            if (username) {
-                currentUsername = username;
-                localStorage.setItem('username', username);
-                document.getElementById('displayUsername').innerText = username;
-                document.getElementById('welcomeUsername').innerText = username;
-            } else {
-                const savedUsername = localStorage.getItem('username');
-                if (savedUsername) {
-                    currentUsername = savedUsername;
-                    document.getElementById('displayUsername').innerText = savedUsername;
-                    document.getElementById('welcomeUsername').innerText = savedUsername;
-                } else {
-                    window.location.href = 'index.html';
-                }
+        // 获取用户信息（从 localStorage 读取 token 和 username）
+        function getUserFromStorage() {
+            const token = localStorage.getItem('token');
+            const username = localStorage.getItem('username');
+            
+            if (!token || !username) {
+                window.location.href = 'index.html';
+                return null;
             }
+            
+            currentUsername = username;
+            document.getElementById('displayUsername').innerText = username;
+            document.getElementById('welcomeUsername').innerText = username;
+            
+            return token;
+        }
+
+        // 带认证的请求封装
+        async function authFetch(url, options = {}) {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = 'index.html';
+                throw new Error('未登录');
+            }
+            
+            const headers = {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token,
+                ...options.headers
+            };
+            
+            const response = await fetch(`${API_URL}${url}`, {
+                ...options,
+                headers
+            });
+            
+            if (response.status === 401) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('username');
+                window.location.href = 'index.html';
+                throw new Error('登录已过期，请重新登录');
+            }
+            
+            return response;
         }
 
         function showHomePage() {
@@ -511,10 +537,12 @@
         }
 
         function logout() {
+            localStorage.removeItem('token');
             localStorage.removeItem('username');
             window.location.href = 'index.html';
         }
 
+        // ========== 消息管理 ==========
         async function loadMessages() {
             const container = document.getElementById('tableContainer');
             container.innerHTML = '<div class="loading">加载中...</div>';
@@ -526,10 +554,12 @@
                     html += `<tr><th style="width: 60%">内容</th><th style="width: 25%">创建人</th><th style="width: 15%">操作</th>`;
                     html += `</thead><tbody>`;
                     for (const item of result.data) {
+                        // 只有自己创建的消息才能删除
+                        const canDelete = item.username === currentUsername;
                         html += `<tr>
                             <td style="word-break: break-word;">${escapeHtml(String(item.content || ''))}</td>
                             <td>${escapeHtml(String(item.username || ''))}</td>
-                            <td><button class="delete-btn" onclick="deleteText(${item.id})">删除</button></td>
+                            <td>${canDelete ? `<button class="delete-btn" onclick="deleteText(${item.id})">删除</button>` : '<span style="color:#64748b">无权删除</span>'}</td>
                         </tr>`;
                     }
                     html += `</tbody>`;
@@ -550,10 +580,9 @@
                 return;
             }
             try {
-                const response = await fetch(`${API_URL}/texts`, {
+                const response = await authFetch('/texts', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ content: content, username: currentUsername })
+                    body: JSON.stringify({ content: content })
                 });
                 const result = await response.json();
                 if (result.success) {
@@ -571,14 +600,20 @@
         async function deleteText(id) {
             if (!confirm('确定要删除吗？')) return;
             try {
-                await fetch(`${API_URL}/texts/${id}`, { method: 'DELETE' });
-                loadMessages();
-                alert('删除成功！');
+                const response = await authFetch(`/texts/${id}`, { method: 'DELETE' });
+                const result = await response.json();
+                if (result.success) {
+                    loadMessages();
+                    alert('删除成功！');
+                } else {
+                    alert('删除失败: ' + result.error);
+                }
             } catch (error) {
                 alert('删除失败');
             }
         }
 
+        // ========== 任务管理 ==========
         async function loadTasks() {
             const container = document.getElementById('tasksContainer');
             container.innerHTML = '<div class="loading">加载中...</div>';
@@ -659,10 +694,9 @@
                 return;
             }
             try {
-                const response = await fetch(`${API_URL}/tasks`, {
+                const response = await authFetch('/tasks', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ title, description, assignee, creator: currentUsername })
+                    body: JSON.stringify({ title, description, assignee })
                 });
                 const result = await response.json();
                 if (result.success) {
@@ -682,7 +716,7 @@
         async function completeTask(id) {
             if (!confirm('确定完成这个任务吗？')) return;
             try {
-                const response = await fetch(`${API_URL}/tasks/${id}/complete`, { method: 'PUT' });
+                const response = await authFetch(`/tasks/${id}/complete`, { method: 'PUT' });
                 const result = await response.json();
                 if (result.success) {
                     loadTasks();
@@ -698,7 +732,7 @@
         async function deleteTask(id) {
             if (!confirm('确定删除这个任务吗？')) return;
             try {
-                const response = await fetch(`${API_URL}/tasks/${id}`, { method: 'DELETE' });
+                const response = await authFetch(`/tasks/${id}`, { method: 'DELETE' });
                 const result = await response.json();
                 if (result.success) {
                     loadTasks();
@@ -711,8 +745,11 @@
             }
         }
 
-        getUsernameFromURL();
-        showHomePage();
+        // 初始化
+        const token = getUserFromStorage();
+        if (token) {
+            showHomePage();
+        }
     </script>
 </body>
 </html>

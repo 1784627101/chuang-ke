@@ -58,18 +58,10 @@
             background: #22c55e;
         }
 
-        .logout-btn {
-            background: #ef4444;
-            color: white;
-            border: none;
-            padding: 8px 20px;
-            border-radius: 40px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-
-        .logout-btn:hover {
-            background: #dc2626;
+        /* 用户菜单样式 */
+        .user-menu-container {
+            position: relative;
+            display: inline-block;
         }
 
         .user-info {
@@ -77,6 +69,14 @@
             display: flex;
             align-items: center;
             gap: 12px;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 40px;
+            transition: background 0.2s;
+        }
+
+        .user-info:hover {
+            background: #334155;
         }
 
         .username {
@@ -93,6 +93,112 @@
             border-radius: 20px;
             font-size: 0.7rem;
             margin-left: 8px;
+        }
+
+        /* 下拉菜单 */
+        .user-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            min-width: 160px;
+            z-index: 100;
+            display: none;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .user-dropdown.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 12px 16px;
+            color: #e2e8f0;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 0.85rem;
+        }
+
+        .dropdown-item:hover {
+            background: #334155;
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: #334155;
+            margin: 4px 0;
+        }
+
+        /* 弹窗样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 28px;
+            width: 90%;
+            max-width: 400px;
+            border: 1px solid #334155;
+        }
+
+        .modal-content h3 {
+            color: #e2e8f0;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 12px 16px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            color: #e2e8f0;
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .modal-buttons button {
+            padding: 8px 20px;
+            border-radius: 40px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .modal-buttons button:first-child {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .modal-buttons button:last-child {
+            background: #334155;
+            color: #e2e8f0;
         }
 
         .main-content {
@@ -375,14 +481,49 @@
             <h1>君兰中学信息科</h1>
         </div>
         <div class="nav-buttons">
-            <div class="user-info">
-                <span></span>
-                <span class="username" id="displayUsername"></span>
-                <span id="devBadge" class="dev-badge" style="display: none;">开发者模式</span>
+            <!-- 用户菜单区域 -->
+            <div class="user-menu-container">
+                <div class="user-info" id="userMenuBtn" onclick="toggleUserMenu()">
+                    <span></span>
+                    <span class="username" id="displayUsername"></span>
+                    <span id="devBadge" class="dev-badge" style="display: none;">开发者模式</span>
+                </div>
+                <div class="user-dropdown" id="userDropdown">
+                    <div class="dropdown-item" onclick="showChangePassword()">修改密码</div>
+                    <div class="dropdown-item" onclick="showChangeName()">修改名称</div>
+                    <div class="dropdown-divider"></div>
+                    <div class="dropdown-item" onclick="logout()">退出登录</div>
+                </div>
             </div>
             <button class="message-btn" id="messageBtn" onclick="showMessagePage()">消息</button>
             <button class="message-btn" id="taskBtn" onclick="showTaskPage()">任务</button>
-            <button class="logout-btn" onclick="logout()">退出</button>
+        </div>
+    </div>
+
+    <!-- 修改密码弹窗 -->
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <h3>修改密码</h3>
+            <input type="password" id="oldPassword" placeholder="当前密码">
+            <input type="password" id="newPassword" placeholder="新密码">
+            <input type="password" id="confirmPassword" placeholder="确认新密码">
+            <div class="modal-buttons">
+                <button onclick="changePassword()">确认</button>
+                <button onclick="closePasswordModal()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 修改名称弹窗 -->
+    <div id="nameModal" class="modal">
+        <div class="modal-content">
+            <h3>修改名称</h3>
+            <input type="text" id="newUsername" placeholder="新用户名">
+            <input type="password" id="namePassword" placeholder="输入密码确认">
+            <div class="modal-buttons">
+                <button onclick="changeUsername()">确认</button>
+                <button onclick="closeNameModal()">取消</button>
+            </div>
         </div>
     </div>
 
@@ -464,6 +605,20 @@
         let allTasks = [];
         let currentFilter = 'all';
 
+        // 用户菜单
+        function toggleUserMenu() {
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        // 点击其他地方关闭菜单
+        document.addEventListener('click', function(e) {
+            const container = document.querySelector('.user-menu-container');
+            if (container && !container.contains(e.target)) {
+                document.getElementById('userDropdown').classList.remove('show');
+            }
+        });
+
         function getUserFromStorage() {
             const token = localStorage.getItem('token');
             const username = localStorage.getItem('username');
@@ -512,6 +667,90 @@
             }
             
             return response;
+        }
+
+        // ========== 修改密码 ==========
+        function showChangePassword() {
+            document.getElementById('passwordModal').classList.add('show');
+            document.getElementById('userDropdown').classList.remove('show');
+        }
+
+        function closePasswordModal() {
+            document.getElementById('passwordModal').classList.remove('show');
+            document.getElementById('oldPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+        }
+
+        async function changePassword() {
+            const oldPwd = document.getElementById('oldPassword').value;
+            const newPwd = document.getElementById('newPassword').value;
+            const confirmPwd = document.getElementById('confirmPassword').value;
+            
+            if (!oldPwd || !newPwd || !confirmPwd) {
+                alert('请填写完整');
+                return;
+            }
+            if (newPwd !== confirmPwd) {
+                alert('新密码两次输入不一致');
+                return;
+            }
+            
+            try {
+                const response = await authFetch('/change-password', {
+                    method: 'POST',
+                    body: JSON.stringify({ oldPassword: oldPwd, newPassword: newPwd })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    alert('密码修改成功，请重新登录');
+                    logout();
+                } else {
+                    alert('修改失败: ' + result.error);
+                }
+            } catch (error) {
+                alert('网络错误: ' + error.message);
+            }
+            closePasswordModal();
+        }
+
+        // ========== 修改用户名 ==========
+        function showChangeName() {
+            document.getElementById('nameModal').classList.add('show');
+            document.getElementById('userDropdown').classList.remove('show');
+        }
+
+        function closeNameModal() {
+            document.getElementById('nameModal').classList.remove('show');
+            document.getElementById('newUsername').value = '';
+            document.getElementById('namePassword').value = '';
+        }
+
+        async function changeUsername() {
+            const newName = document.getElementById('newUsername').value;
+            const password = document.getElementById('namePassword').value;
+            
+            if (!newName || !password) {
+                alert('请填写完整');
+                return;
+            }
+            
+            try {
+                const response = await authFetch('/change-username', {
+                    method: 'POST',
+                    body: JSON.stringify({ newUsername: newName, password: password })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    alert('用户名修改成功，请重新登录');
+                    logout();
+                } else {
+                    alert('修改失败: ' + result.error);
+                }
+            } catch (error) {
+                alert('网络错误: ' + error.message);
+            }
+            closeNameModal();
         }
 
         function showHomePage() {

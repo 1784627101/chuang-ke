@@ -74,12 +74,12 @@
             <label>密码</label>
             <input type="password" id="password" placeholder="请输入密码">
         </div>
-        <button onclick="login()">登 录</button>
+        <button onclick="login()">登录</button>
         <div id="message" class="message"></div>
     </div>
 
     <script>
-        const API_URL = 'https://energetic-presence-production.up.railway.app/api/login';
+        const API_URL = 'https://energetic-presence-production.up.railway.app/api';
 
         async function login() {
             const username = document.getElementById('username').value;
@@ -93,7 +93,7 @@
             }
 
             try {
-                const response = await fetch(API_URL, {
+                const response = await fetch(`${API_URL}/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password })
@@ -101,8 +101,9 @@
                 const data = await response.json();
 
                 if (data.success) {
+                    localStorage.setItem('token', data.token);
                     localStorage.setItem('username', data.username);
-                    window.location.href = `page.html?username=${encodeURIComponent(data.username)}`;
+                    window.location.href = 'page.html';
                 } else {
                     messageDiv.textContent = data.message;
                     messageDiv.className = 'message error';

@@ -424,8 +424,8 @@
         </div>
         <div class="nav-buttons">
             <div class="user-info">
-                <span>👤</span>
-                <span class="username" id="displayUsername"></span>
+                
+              <span class="username" id="displayUsername"></span>
             </div>
             <button class="message-btn" id="messageBtn" onclick="showMessagePage()">消息</button>
             <button class="message-btn" id="taskBtn" onclick="showTaskPage()">任务</button>
@@ -436,20 +436,20 @@
     <div class="main-content">
         <div id="homePage" class="home-page">
             <div class="welcome-card">
-                <div class="welcome-icon">🏫</div>
+                
                 <h2>欢迎回来，<span id="welcomeUsername"></span>！</h2>
                 <p>君兰中学信息科管理系统</p>
             </div>
 
             <div class="info-cards">
                 <div class="info-card" onclick="showMessagePage()">
-                    <div class="info-icon">📝</div>
+                    
                     <h3>消息管理</h3>
                     <p>查看和发布通知消息</p>
                 </div>
 
                 <div class="info-card" onclick="showTaskPage()">
-                    <div class="info-icon">📋</div>
+                    
                     <h3>任务管理</h3>
                     <p>布置任务、跟踪进度</p>
                     <div class="task-stats">
@@ -476,7 +476,7 @@
             </div>
 
             <div class="card">
-                <h2>➕ 添加消息</h2>
+                <h2>添加消息</h2>
                 <div class="add-form">
                     <input type="text" id="textContent" placeholder="请输入内容">
                     <button onclick="addText()">添加</button>
@@ -484,7 +484,7 @@
             </div>
 
             <div class="card">
-                <h2>📋 消息列表</h2>
+                <h2>消息列表</h2>
                 <div class="table-wrapper" id="tableContainer">
                     <div class="loading">加载中...</div>
                 </div>
@@ -497,7 +497,7 @@
             </div>
 
             <div class="card">
-                <h2>➕ 布置新任务</h2>
+                <h2>布置新任务</h2>
                 <div class="add-form">
                     <input type="text" id="taskTitle" placeholder="任务标题">
                     <input type="text" id="taskAssignee" placeholder="负责人用户名">
@@ -507,7 +507,7 @@
             </div>
 
             <div class="card">
-                <h2>📋 任务列表</h2>
+                <h2>任务列表</h2>
                 <div class="tabs">
                     <button class="tab-btn active" onclick="filterTasks('all', this)">全部</button>
                     <button class="tab-btn" onclick="filterTasks('待完成', this)">待完成</button>

@@ -108,11 +108,6 @@
             margin-bottom: 32px;
         }
 
-        .welcome-icon {
-            font-size: 64px;
-            margin-bottom: 20px;
-        }
-
         .welcome-card h2 {
             color: #e2e8f0;
             font-size: 1.8rem;
@@ -143,11 +138,6 @@
         .info-card:hover {
             transform: translateY(-4px);
             border-color: #3b82f6;
-        }
-
-        .info-icon {
-            font-size: 40px;
-            margin-bottom: 16px;
         }
 
         .info-card h3 {
@@ -389,20 +379,17 @@
     <div class="main-content">
         <div id="homePage" class="home-page">
             <div class="welcome-card">
-                <div class="welcome-icon"></div>
                 <h2>欢迎回来，<span id="welcomeUsername"></span>！</h2>
                 <p>君兰中学信息科管理系统</p>
             </div>
 
             <div class="info-cards">
                 <div class="info-card" onclick="showMessagePage()">
-                    <div class="info-icon"></div>
                     <h3>消息管理</h3>
                     <p>查看和发布通知消息</p>
                 </div>
 
                 <div class="info-card" onclick="showTaskPage()">
-                    <div class="info-icon"></div>
                     <h3>任务管理</h3>
                     <p>布置任务、跟踪进度</p>
                 </div>
@@ -467,50 +454,24 @@
         let allTasks = [];
         let currentFilter = 'all';
 
-        // ========== 获取用户信息（从 localStorage 读取 token）==========
-        function getUserFromStorage() {
-            const token = localStorage.getItem('token');
-            const username = localStorage.getItem('username');
-            
-            if (!token || !username) {
-                window.location.href = 'index.html';
-                return null;
+        function getUsernameFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const username = urlParams.get('username');
+            if (username) {
+                currentUsername = username;
+                localStorage.setItem('username', username);
+                document.getElementById('displayUsername').innerText = username;
+                document.getElementById('welcomeUsername').innerText = username;
+            } else {
+                const savedUsername = localStorage.getItem('username');
+                if (savedUsername) {
+                    currentUsername = savedUsername;
+                    document.getElementById('displayUsername').innerText = savedUsername;
+                    document.getElementById('welcomeUsername').innerText = savedUsername;
+                } else {
+                    window.location.href = 'index.html';
+                }
             }
-            
-            currentUsername = username;
-            document.getElementById('displayUsername').innerText = username;
-            document.getElementById('welcomeUsername').innerText = username;
-            
-            return token;
-        }
-
-        // ========== 带认证的请求封装 ==========
-        async function authFetch(url, options = {}) {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                window.location.href = 'index.html';
-                throw new Error('未登录');
-            }
-            
-            const headers = {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + token,
-                ...options.headers
-            };
-            
-            const response = await fetch(`${API_URL}${url}`, {
-                ...options,
-                headers
-            });
-            
-            if (response.status === 401) {
-                localStorage.removeItem('token');
-                localStorage.removeItem('username');
-                window.location.href = 'index.html';
-                throw new Error('登录已过期，请重新登录');
-            }
-            
-            return response;
         }
 
         function showHomePage() {
@@ -550,12 +511,10 @@
         }
 
         function logout() {
-            localStorage.removeItem('token');
             localStorage.removeItem('username');
             window.location.href = 'index.html';
         }
 
-        // ========== 消息管理 ==========
         async function loadMessages() {
             const container = document.getElementById('tableContainer');
             container.innerHTML = '<div class="loading">加载中...</div>';
@@ -563,15 +522,18 @@
                 const response = await fetch(`${API_URL}/texts`);
                 const result = await response.json();
                 if (result.success && result.data && result.data.length > 0) {
-                    let html = `<table><thead><tr><th style="width: 60%">内容</th><th style="width: 25%">创建人</th><th style="width: 15%">操作</th></tr></thead><tbody>`;
+                    let html = `<table><thead>`;
+                    html += `<tr><th style="width: 60%">内容</th><th style="width: 25%">创建人</th><th style="width: 15%">操作</th>`;
+                    html += `</thead><tbody>`;
                     for (const item of result.data) {
                         html += `<tr>
                             <td style="word-break: break-word;">${escapeHtml(String(item.content || ''))}</td>
                             <td>${escapeHtml(String(item.username || ''))}</td>
-                            <td>${item.username === currentUsername ? `<button class="delete-btn" onclick="deleteText(${item.id})">删除</button>` : '<span style="color:#64748b">无权删除</span>'}</td>
+                            <td><button class="delete-btn" onclick="deleteText(${item.id})">删除</button></td>
                         </tr>`;
                     }
-                    html += `</tbody></table>`;
+                    html += `</tbody>`;
+                    html += `</table>`;
                     container.innerHTML = html;
                 } else {
                     container.innerHTML = '<div class="loading">暂无数据，请添加</div>';
@@ -588,9 +550,10 @@
                 return;
             }
             try {
-                const response = await authFetch('/texts', {
+                const response = await fetch(`${API_URL}/texts`, {
                     method: 'POST',
-                    body: JSON.stringify({ content: content })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: content, username: currentUsername })
                 });
                 const result = await response.json();
                 if (result.success) {
@@ -608,20 +571,14 @@
         async function deleteText(id) {
             if (!confirm('确定要删除吗？')) return;
             try {
-                const response = await authFetch(`/texts/${id}`, { method: 'DELETE' });
-                const result = await response.json();
-                if (result.success) {
-                    loadMessages();
-                    alert('删除成功！');
-                } else {
-                    alert('删除失败: ' + result.error);
-                }
+                await fetch(`${API_URL}/texts/${id}`, { method: 'DELETE' });
+                loadMessages();
+                alert('删除成功！');
             } catch (error) {
                 alert('删除失败');
             }
         }
 
-        // ========== 任务管理 ==========
         async function loadTasks() {
             const container = document.getElementById('tasksContainer');
             container.innerHTML = '<div class="loading">加载中...</div>';
@@ -702,9 +659,10 @@
                 return;
             }
             try {
-                const response = await authFetch('/tasks', {
+                const response = await fetch(`${API_URL}/tasks`, {
                     method: 'POST',
-                    body: JSON.stringify({ title, description, assignee })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, description, assignee, creator: currentUsername })
                 });
                 const result = await response.json();
                 if (result.success) {
@@ -724,7 +682,7 @@
         async function completeTask(id) {
             if (!confirm('确定完成这个任务吗？')) return;
             try {
-                const response = await authFetch(`/tasks/${id}/complete`, { method: 'PUT' });
+                const response = await fetch(`${API_URL}/tasks/${id}/complete`, { method: 'PUT' });
                 const result = await response.json();
                 if (result.success) {
                     loadTasks();
@@ -740,7 +698,7 @@
         async function deleteTask(id) {
             if (!confirm('确定删除这个任务吗？')) return;
             try {
-                const response = await authFetch(`/tasks/${id}`, { method: 'DELETE' });
+                const response = await fetch(`${API_URL}/tasks/${id}`, { method: 'DELETE' });
                 const result = await response.json();
                 if (result.success) {
                     loadTasks();
@@ -753,11 +711,8 @@
             }
         }
 
-        // 初始化
-        const token = getUserFromStorage();
-        if (token) {
-            showHomePage();
-        }
+        getUsernameFromURL();
+        showHomePage();
     </script>
 </body>
 </html>
